@@ -423,6 +423,59 @@
       line-height: 1.7;
     }
 
+    .toggle-group {
+      display: flex;
+      background: var(--bg-2);
+      border-radius: 8px;
+      padding: 3px;
+      margin-top: 4px;
+    }
+
+    .toggle-group button {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .toggle-group button.active {
+      background: #fff;
+      color: var(--accent);
+      box-shadow: 0 2px 6px rgba(60, 38, 24, 0.1);
+    }
+
+    .total-score-display {
+      font-size: clamp(38px, 6vw, 56px);
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.1;
+      margin-top: 12px;
+    }
+
+    .total-score-max {
+      font-size: 18px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .main-score-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+      border: 1px solid rgba(184, 92, 56, 0.2);
+    }
+
+    .handbook-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      align-items: start;
+    }
+
     @keyframes fadeUp {
       from {
         opacity: 0;
@@ -467,227 +520,218 @@
 <body>
   <main class="shell">
     <header class="app-head">
-      <h1>包裝記點記錄</h1>
-      <p>僅包含頁面一（hr_miss_record_types）與頁面二（hr_miss_records）。</p>
+      <h1>包裝人員品質考核與記點查詢</h1>
+      <p>組員個人扣點成績看板與記點規章手冊。</p>
     </header>
 
     <nav class="nav" aria-label="頁面切換">
-      <button class="active" data-target="types-panel">頁面一：記點類型總覽</button>
-      <button data-target="stats-panel">頁面二：記錄統計</button>
+      <button class="active" data-target="query-panel">頁面一：個人考核成績查詢</button>
+      <button data-target="handbook-panel">頁面二：記點規章手冊</button>
     </nav>
 
-    <section id="types-panel" class="panel active">
+    <section id="query-panel" class="panel active">
       <div class="toolbar">
         <div class="field">
-          <label for="jobs-filter">jobs 分類</label>
-          <select id="jobs-filter">
-            <option value="all">全部</option>
-            <option value="0">0 全員</option>
-            <option value="1">1 組員</option>
-            <option value="2">2 貼紙</option>
-            <option value="3">3 品保</option>
-            <option value="4">4 機台</option>
-          </select>
+          <label for="employee-search">查詢組員（姓名或工號）</label>
+          <input id="employee-search" list="employees-list" placeholder="輸入或選擇人員..." autocomplete="off" />
+          <datalist id="employees-list"></datalist>
         </div>
         <div class="field">
-          <label for="usage-filter">使用狀態</label>
-          <select id="usage-filter">
-            <option value="all">全部</option>
-            <option value="used">僅已使用</option>
-            <option value="unused">僅未使用</option>
-          </select>
+          <label for="date-start-query">查詢開始日期</label>
+          <input id="date-start-query" type="date" />
         </div>
         <div class="field">
-          <label for="date-start-types">開始日期</label>
-          <input id="date-start-types" type="date" />
+          <label for="date-end-query">查詢結束日期</label>
+          <input id="date-end-query" type="date" />
         </div>
         <div class="field">
-          <label for="date-end-types">結束日期</label>
-          <input id="date-end-types" type="date" />
+          <label>考核身分標準</label>
+          <div class="toggle-group" id="role-toggle-group">
+            <button type="button" id="role-crew-btn" class="active" data-role="crew">一般人員 (1200分)</button>
+            <button type="button" id="role-machine-btn" data-role="machine">機台人員 (1800分)</button>
+          </div>
         </div>
       </div>
+      <div class="footnote" style="margin-top:-8px; margin-bottom:16px;">預設查詢最近 3 個月內（約 92 天）的記點記錄。</div>
 
       <div class="grid">
-        <article class="card">
-          <div class="card-header">
-            <div>
-              <h2>類型清單</h2>
-              <p>依 jobs 分群，顯示 item_code、category、subcategory、points 與使用次數。</p>
+        <article class="card main-score-card">
+          <div class="card-body" style="text-align: center; padding: 32px 18px;">
+            <h2 style="margin: 0; font-size: 15px; color: var(--muted); font-weight: 700; letter-spacing: 0.05em;">
+              品質考核實得分數</h2>
+            <div class="total-score-display">
+              <span id="total-score-val">1200</span><span class="total-score-max" id="total-score-max-val"> /
+                1200</span>
             </div>
-            <span class="badge">未使用類型會標示</span>
-          </div>
-          <div class="card-body">
-            <div id="types-view-dropdown">
-              <div class="field" style="margin-bottom: 10px;">
-                <label for="type-category-filter">分類下拉篩選</label>
-                <select id="type-category-filter">
-                  <option value="all">全部分類</option>
-                </select>
-              </div>
-              <div class="muted" id="types-dropdown-meta" style="font-size: 13px; margin-bottom: 8px;">-</div>
-              <div class="type-table-scroll">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>item_code</th>
-                      <th>分類</th>
-                      <th>points</th>
-                      <th>使用次數</th>
-                    </tr>
-                  </thead>
-                  <tbody id="types-table-body-dropdown"></tbody>
-                </table>
-              </div>
-            </div>
+            <p id="score-comment" style="margin: 12px 0 0; font-size: 15px; font-weight: 800; color: var(--accent-2);">
+            </p>
           </div>
         </article>
 
         <article class="card">
           <div class="card-header">
             <div>
-              <h2>分類概況</h2>
-              <p>各 jobs 的總數、已使用與未使用情況，方便做篩選器摘要。</p>
+              <h2>三大品質維度得分</h2>
+              <p>各項考核滿分比照 Excel 基礎考核表標準。</p>
             </div>
-            <span class="badge">jobs summary</span>
+            <span class="badge">品質記點扣分</span>
           </div>
-          <div class="card-body">
-            <div class="bar-list" id="jobs-summary-list"></div>
-            <div class="footnote">未使用的類型可以用淺色或警示標籤標出，便於管理者快速看出哪些規則長期沒有被用到。</div>
+          <div class="card-body" style="padding-top: 10px;">
+            <div class="bar-list">
+              <div class="bar-item">
+                <div class="bar-top">
+                  <span>「生產作業與機台操作」</span>
+                  <strong id="score-dim1">600 / 600</strong>
+                </div>
+                <div class="bar-track">
+                  <div id="fill-dim1" class="bar-fill" style="width: 100%"></div>
+                </div>
+              </div>
+              <div class="bar-item" style="margin-top: 6px;">
+                <div class="bar-top">
+                  <span>「現場紀律與環境維護」</span>
+                  <strong id="score-dim2">200 / 200</strong>
+                </div>
+                <div class="bar-track">
+                  <div id="fill-dim2" class="bar-fill" style="width: 100%"></div>
+                </div>
+              </div>
+              <div class="bar-item" style="margin-top: 6px;">
+                <div class="bar-top">
+                  <span>「品質異常與首件確認」</span>
+                  <strong id="score-dim3">400 / 400</strong>
+                </div>
+                <div class="bar-track">
+                  <div id="fill-dim3" class="bar-fill" style="width: 100%"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
 
         <article class="card full-span">
           <div class="card-header">
             <div>
-              <h2>記點明細（含備註事由）</h2>
-              <p>顯示實際被記錄的細項內容與 notes 備註，預設最近 100 筆。</p>
+              <h2>個人記點明細</h2>
+              <p id="records-meta-text">請選擇組員進行查詢。</p>
             </div>
-            <span class="badge">Records</span>
+            <span class="badge" id="record-count-badge">0 筆記錄</span>
           </div>
           <div class="card-body">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>日期</th>
-                  <th>人員</th>
-                  <th>細項</th>
-                  <th>備註事由</th>
-                  <th>點數</th>
-                </tr>
-              </thead>
-              <tbody id="records-table-body"></tbody>
-            </table>
+            <div class="type-table-scroll" style="max-height: 480px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="white-space: nowrap;">日期</th>
+                    <th style="white-space: nowrap;">考核維度</th>
+                    <th style="white-space: nowrap;">記點細項</th>
+                    <th>備註事由</th>
+                    <th style="white-space: nowrap; text-align: center;">扣點</th>
+                  </tr>
+                </thead>
+                <tbody id="personal-records-body">
+                  <tr>
+                    <td colspan="5" class="muted" style="text-align: center; padding: 40px 0;">請在上方輸入或選擇人員以查詢其品質分數與記點明細。
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </article>
       </div>
     </section>
 
-    <section id="stats-panel" class="panel">
-      <article class="card policy-inline">
-        <div class="card-header">
-          <div>
-            <h2>包裝條例總覽（依 PDF）</h2>
-            <p>依「包裝作業條例規範.pdf」整理重點，先看規範再看統計，避免只看數字不看行為標準。</p>
-          </div>
-          <span class="badge">頁面二說明</span>
-        </div>
-        <div class="card-body">
-          <ul>
-            <li>出勤與工時紀律：晨會後不得逗留、午休與下午休息後需準時回崗，違反多為 1 點。</li>
-            <li>開線前檢核：機台下菜前需確認袋模、保鮮膜、打點/打印位置、首包檢查與組合秤設定，造成重工多為 2 至 3 點。</li>
-            <li>生產中回報：機台或原料異常需即時回報；未回報導致效率下降或客訴，屬高風險（常見 2 至 3 點）。</li>
-            <li>流程與服從：不得擅自換位、擅離、私事離崗或不服從線控指令；依情節多為 1 至 3 點。</li>
-            <li>收尾與衛生：包材/設備歸位、環境清潔、工作車與機台整理、休息室與冰箱規範，違反多為 1 至 2 點（部分含罰款）。</li>
-            <li>排班與請假：加班需配合排程，臨時/長假需提前通報；出勤人數有下限，違規會影響考核。</li>
-            <li>安全與稽核規範：使用拖板車未依規定操作、操作機台未按暫停等，以確保作業安全與遵守稽核規範。</li>
-          </ul>
-        </div>
-      </article>
-
+    <section id="handbook-panel" class="panel">
       <div class="subtoolbar">
         <div class="field">
-          <label for="position-filter">職位</label>
-          <select id="position-filter">
-            <option value="all">全部職位</option>
-            <option value="crew">組員</option>
-            <option value="sticker">貼紙</option>
-            <option value="qa">品保</option>
-            <option value="machine">機台</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="date-start">開始日期</label>
-          <input id="date-start" type="date" />
-        </div>
-        <div class="field">
-          <label for="date-end">結束日期</label>
-          <input id="date-end" type="date" />
-        </div>
-        <div class="field">
-          <label for="jobs-stat-filter">jobs 篩選</label>
-          <select id="jobs-stat-filter">
-            <option value="all">全部 jobs</option>
-            <option value="0">0 全員</option>
-            <option value="1">1 組員</option>
-            <option value="2">2 貼紙</option>
-            <option value="3">3 品保</option>
-            <option value="4">4 機台</option>
+          <label for="handbook-jobs-filter">jobs 規章職位篩選</label>
+          <select id="handbook-jobs-filter">
+            <option value="all">全部適用規章</option>
+            <option value="0">0 全員適用</option>
+            <option value="1">1 組員適用</option>
+            <option value="2">2 貼紙適用</option>
+            <option value="3">3 品保適用</option>
+            <option value="4">4 機台適用</option>
+            <option value="5">5 線控適用</option>
+            <option value="6">6 場控適用</option>
           </select>
         </div>
       </div>
-      <div class="footnote">目前查詢區間限制為 3 個月內（約 92 天）。</div>
 
-      <div class="grid">
+      <div class="handbook-grid">
         <article class="card">
-          <div class="card-header">
+          <div class="card-header"
+            style="border-bottom: 1px solid var(--border); padding-bottom: 12px; background: rgba(47, 107, 95, 0.05);">
             <div>
-              <h2>最常被記的事項</h2>
-              <p>統計以 types 表的 subcategory 為準，並保留 2貼紙-3 / 2貼紙-4 的合併規則。</p>
+              <h2>一、生產作業與機台操作</h2>
+              <p style="margin-top: 4px;">包括：作業準備與確認、生產加工作業、機台操作流程規範。</p>
             </div>
-            <span class="badge">Top items</span>
+            <span class="badge" style="background: rgba(47, 107, 95, 0.1); color: var(--accent-2);">維度一</span>
           </div>
-          <div class="card-body">
-            <div class="bar-list" id="top-items-list"></div>
+          <div class="card-body" style="padding: 0;">
+            <div class="type-table-scroll" style="max-height: 500px;">
+              <table class="table" style="margin: 0;">
+                <thead>
+                  <tr>
+                    <th style="padding-left: 14px;">代號</th>
+                    <th>規章細項</th>
+                    <th style="text-align: center; padding-right: 14px; white-space: nowrap;">扣分</th>
+                  </tr>
+                </thead>
+                <tbody id="handbook-dim1-body"></tbody>
+              </table>
+            </div>
           </div>
         </article>
 
         <article class="card">
-          <div class="card-header">
+          <div class="card-header"
+            style="border-bottom: 1px solid var(--border); padding-bottom: 12px; background: rgba(184, 92, 56, 0.05);">
             <div>
-              <h2>誰被記最多</h2>
-              <p>以員工編號（employee_code）+ 工通姓名合併計算總數，再展開職位明細。</p>
+              <h2>二、現場紀律與環境維護</h2>
+              <p style="margin-top: 4px;">包括：收尾環境維護、規範遵守與團隊協作、安全紀律。</p>
             </div>
-            <span class="badge">Top employees</span>
+            <span class="badge" style="background: rgba(184, 92, 56, 0.1); color: var(--accent);">維度二</span>
           </div>
-          <div class="card-body">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>人員</th>
-                  <th>總數</th>
-                  <th>職位明細</th>
-                </tr>
-              </thead>
-              <tbody id="employees-table-body"></tbody>
-            </table>
+          <div class="card-body" style="padding: 0;">
+            <div class="type-table-scroll" style="max-height: 500px;">
+              <table class="table" style="margin: 0;">
+                <thead>
+                  <tr>
+                    <th style="padding-left: 14px;">代號</th>
+                    <th>規章細項</th>
+                    <th style="text-align: center; padding-right: 14px; white-space: nowrap;">扣分</th>
+                  </tr>
+                </thead>
+                <tbody id="handbook-dim2-body"></tbody>
+              </table>
+            </div>
           </div>
         </article>
 
         <article class="card">
-          <div class="card-header">
+          <div class="card-header"
+            style="border-bottom: 1px solid var(--border); padding-bottom: 12px; background: rgba(183, 50, 57, 0.05);">
             <div>
-              <h2>按月份趨勢</h2>
-              <p>先做成簡單的直條視覺，後續可改成圖表套件或 ECharts。</p>
+              <h2>三、品質異常與首件確認</h2>
+              <p style="margin-top: 4px;">包括：原料品質回報、成品品質、首包/首件確認。</p>
             </div>
-            <span class="badge">Monthly trend</span>
+            <span class="badge" style="background: rgba(183, 50, 57, 0.1); color: var(--danger);">維度三</span>
           </div>
-          <div class="card-body">
-            <div class="legend">
-              <span><i style="background: var(--accent-2)"></i>總記點數</span>
-              <span><i style="background: var(--accent)"></i>可切換職位 / jobs</span>
+          <div class="card-body" style="padding: 0;">
+            <div class="type-table-scroll" style="max-height: 500px;">
+              <table class="table" style="margin: 0;">
+                <thead>
+                  <tr>
+                    <th style="padding-left: 14px;">代號</th>
+                    <th>規章細項</th>
+                    <th style="text-align: center; padding-right: 14px; white-space: nowrap;">扣分</th>
+                  </tr>
+                </thead>
+                <tbody id="handbook-dim3-body"></tbody>
+              </table>
             </div>
-            <div class="chart-row" id="trend-row" aria-label="月份趨勢圖"></div>
-            <div class="footnote">這裡顯示的是靜態範例資料，等 API 完成後可以直接把月份數值替換成後端回傳結果。</div>
           </div>
         </article>
       </div>
@@ -695,57 +739,32 @@
   </main>
 
   <script>
-    const buttons = Array.from(document.querySelectorAll('.nav button'));
-    const panels = Array.from(document.querySelectorAll('.panel'));
     const API_BASE = 'http://127.0.0.1:8000';
     const MAX_RANGE_DAYS = 92;
+    const DEDUCTION_MULTIPLIER = 1; // 扣分折算乘數（預設 1 點扣 1 分）
     let apiAvailable = true;
 
-    const state = {
-      jobs: 'all',
-      usage: 'all',
-      typeCategory: '',
-      position: 'all',
-      jobsStats: 'all',
-      startDate: '',
-      endDate: ''
-    };
-
+    // 全域資料存放
     const data = {
-      typeRows: [
-        { item_code: '2貼紙-3', jobs: 2, category: '標籤印製錯誤', subcategory: 'label_print_error', points: -2, usage_count: 18, is_unused: false },
-        { item_code: '2貼紙-4', jobs: 2, category: '標籤印製錯誤', subcategory: 'label_print_error', points: -3, usage_count: 11, is_unused: false },
-        { item_code: '4機台-2', jobs: 4, category: '機台巡檢', subcategory: 'machine_check', points: -1, usage_count: 0, is_unused: true },
-        { item_code: '1組員-5', jobs: 1, category: '組員紀律', subcategory: 'team_discipline', points: -1, usage_count: 0, is_unused: true },
-        { item_code: '0全員-2', jobs: 0, category: '作業區未清潔', subcategory: 'workspace_cleanliness', points: -1, usage_count: 9, is_unused: false }
+      employees: [],
+      personalRecords: [],
+      allTypes: [],
+      // 靜態備份資料以防 API 無法連線
+      fallbackEmployees: [
+        { employee_code: '0688', employee_name: '陳怡靜', latest_position: '1組員' },
+        { employee_code: '1024', employee_name: '陳○廷', latest_position: '1組員' },
+        { employee_code: '1188', employee_name: '黃○瑄', latest_position: '3品保' },
+        { employee_code: '1202', employee_name: '林○翔', latest_position: '4機台' }
       ],
-      jobsSummary: [
-        { jobs: 0, label: '0 全員', total_types: 30, used_types: 24, unused_types: 6 },
-        { jobs: 1, label: '1 組員', total_types: 18, used_types: 11, unused_types: 7 },
-        { jobs: 2, label: '2 貼紙', total_types: 20, used_types: 15, unused_types: 5 },
-        { jobs: 3, label: '3 品保', total_types: 8, used_types: 4, unused_types: 4 },
-        { jobs: 4, label: '4 機台', total_types: 8, used_types: 3, unused_types: 5 }
+      fallbackTypes: [
+        { item_code: '2貼紙-3', jobs: '2', category: '標籤印製', subcategory: '標籤印製錯誤', points: -2, usage_count: 18, is_unused: false },
+        { item_code: '2貼紙-4', jobs: '2', category: '標籤印製', subcategory: '標籤印製錯誤', points: -3, usage_count: 11, is_unused: false },
+        { item_code: '4機台-2', jobs: '4', category: '作業準備與確認', subcategory: '未檢查首包', points: -1, usage_count: 0, is_unused: true },
+        { item_code: '1組員-5', jobs: '1', category: '效率與團隊作業', subcategory: '未依規定時間內回到工作崗位', points: -1, usage_count: 0, is_unused: true },
+        { item_code: '0全員-2', jobs: '0', category: '收尾與環境維護', subcategory: '工作區域未清理', points: -1, usage_count: 9, is_unused: false },
+        { item_code: '0全員-1', jobs: '0', category: '安全與稽核規範', subcategory: '使用拖板車，未依規定操作', points: -1, usage_count: 0, is_unused: true }
       ],
-      topItems: [
-        { group_key: 'label_print_error', group_name: '標籤印製錯誤', count: 29 },
-        { group_key: 'package_count_mismatch', group_name: '包裝數量不符', count: 22 },
-        { group_key: 'workspace_dirty', group_name: '作業區未清潔', count: 17 },
-        { group_key: 'procedure_violation', group_name: '流程未遵守', count: 12 }
-      ],
-      topEmployees: [
-        { employee_code: 'E1024', employee_name: '陳○廷', total_count: 14, position_breakdown: [{ employee_position: '組員', count: 9 }, { employee_position: '貼紙', count: 5 }] },
-        { employee_code: 'E1188', employee_name: '黃○瑄', total_count: 11, position_breakdown: [{ employee_position: '品保', count: 11 }] },
-        { employee_code: 'E1202', employee_name: '林○翔', total_count: 9, position_breakdown: [{ employee_position: '機台', count: 6 }, { employee_position: '組員', count: 3 }] }
-      ],
-      monthlyTrend: [
-        { month: '1月', count: 42 },
-        { month: '2月', count: 58 },
-        { month: '3月', count: 44 },
-        { month: '4月', count: 72 },
-        { month: '5月', count: 64 },
-        { month: '6月', count: 88 }
-      ],
-      records: [
+      fallbackRecords: [
         {
           event_date: '2026-06-05',
           employee_name: '陳怡靜',
@@ -753,13 +772,132 @@
           employee_position: '1組員',
           item_code: '0全員-8',
           category: '效率與團隊作業',
-          subcategory: '因重工導致缺誤裝排程效率',
+          subcategory: '因重工導致耽誤該排程效率',
           notes: '做PLB洋菇（領料）把第一第二盒被包和第三盒被包放到一起未跟收箱人員和工主對人員講，導致第二筆履歷另一張收箱人員不曉得以為是收箱有誤。',
           points: -1
         }
       ]
     };
 
+    const state = {
+      selectedEmployee: null, // { employee_code, employee_name, latest_position }
+      startDate: '',
+      endDate: '',
+      assessmentRole: 'crew', // 'crew' (1200) | 'machine' (1800)
+      handbookJob: 'all'
+    };
+
+    // ── 品質考核三大維度映射邏輯 ──────────────────
+    function getDimension(category, subcategory) {
+      const cat = String(category || '').trim();
+      const sub = String(subcategory || '').trim();
+
+      // 特殊規則：任何細項字樣包含「首件確認」或「未檢查首包」一律歸到品質維度
+      if (sub.includes('未檢查首包') || sub.includes('首件確認') || sub.includes('品質')) {
+        return 3;
+      }
+
+      // 1. 生產作業與機台操作
+      if ([
+        '作業準備與確認',
+        '生產加工作業',
+        '機台參數設定',
+        '機台袋膜設定',
+        '機台保養與維修聯絡',
+        '備料與發料作業',
+        '庫存管理與盤點',
+        '原料控管與盤點',
+        '生產執行與進度回報',
+        '生產排程規劃與追蹤'
+      ].includes(cat)) {
+        return 1;
+      }
+
+      // 2. 現場紀律與環境維護
+      if ([
+        '收尾與環境維護',
+        '效率與團隊作業',
+        '安全與稽核規範',
+        '現場人員指派與管理',
+        '現場支援與協調',
+        '行政庶務',
+        '行政庶務與費用管理',
+        'ERP作業與流程',
+        '人員後勤管理'
+      ].includes(cat)) {
+        return 2;
+      }
+
+      // 3. 品質異常與首件確認
+      if ([
+        '品質',
+        '品質異常',
+        '品質維護與異常處理',
+        '現場品質控管',
+        '履歷作業',
+        '標籤印製',
+        '系統單據與對帳'
+      ].includes(cat)) {
+        return 3;
+      }
+
+      return 1; // 預設歸入生產操作
+    }
+
+    const DIMENSION_LABELS = {
+      1: '生產作業與機台操作',
+      2: '現場紀律與環境維護',
+      3: '品質異常與首件確認'
+    };
+
+    // ── 日期輔助工具 ─────────────────────────────
+    function formatDateInput(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseInputDate(value) {
+      if (!value) return null;
+      const date = new Date(`${value}T00:00:00`);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function enforceThreeMonthRange(startId, endId) {
+      const startEl = document.getElementById(startId);
+      const endEl = document.getElementById(endId);
+      if (!startEl || !endEl) return;
+      const start = parseInputDate(startEl.value);
+      const end = parseInputDate(endEl.value);
+      if (!start || !end) return;
+
+      const diffDays = Math.floor((end.getTime() - start.getTime()) / 86400000);
+      if (diffDays <= MAX_RANGE_DAYS) return;
+
+      // 超過三個月則自動將開始日期向後縮短至 92 天前
+      const adjusted = new Date(end);
+      adjusted.setDate(adjusted.getDate() - MAX_RANGE_DAYS);
+      startEl.value = formatDateInput(adjusted);
+      state.startDate = startEl.value;
+    }
+
+    function initializeDateRangeDefault() {
+      const startEl = document.getElementById('date-start-query');
+      const endEl = document.getElementById('date-end-query');
+      if (!startEl || !endEl) return;
+      if (startEl.value || endEl.value) return;
+
+      const end = new Date();
+      const start = new Date(end);
+      start.setDate(start.getDate() - MAX_RANGE_DAYS);
+      startEl.value = formatDateInput(start);
+      endEl.value = formatDateInput(end);
+      state.startDate = startEl.value;
+      state.endDate = endEl.value;
+    }
+
+    // ── HTTP API 串接 ──────────────────────────────
     function toQuery(params) {
       const sp = new URLSearchParams();
       Object.entries(params).forEach(([k, v]) => {
@@ -776,397 +914,353 @@
       return res.json();
     }
 
-    async function loadRemoteData() {
+    async function loadEmployees() {
       try {
-        const [typesRes, jobsSummaryRes, topItemsRes, topEmployeesRes, monthlyTrendRes, recordsRes] = await Promise.all([
-          fetchJson('/api/v1/types', {
-            jobs: state.jobs,
-            include_unused: true
-          }),
-          fetchJson('/api/v1/types/jobs-summary'),
-          fetchJson('/api/v1/stats/top-items', {
-            start_date: state.startDate,
-            end_date: state.endDate,
-            employee_position: state.position,
-            jobs: state.jobsStats,
-            limit: 20
-          }),
-          fetchJson('/api/v1/stats/top-employees', {
-            start_date: state.startDate,
-            end_date: state.endDate,
-            employee_position: state.position,
-            limit: 20
-          }),
-          fetchJson('/api/v1/stats/monthly-trend', {
-            start_month: state.startDate ? state.startDate.slice(0, 7) : '',
-            end_month: state.endDate ? state.endDate.slice(0, 7) : '',
-            employee_position: state.position,
-            jobs: state.jobsStats
-          }),
-          fetchJson('/api/v1/records', {
-            start_date: state.startDate,
-            end_date: state.endDate,
-            employee_position: state.position,
-            jobs: state.jobsStats,
-            limit: 100
-          })
-        ]);
-
-        data.typeRows = (typesRes.items || []).map((row) => ({
-          item_code: row.item_code,
-          jobs: Number(row.jobs),
-          category: row.category,
-          subcategory: row.subcategory,
-          points: Number(row.points ?? 0),
-          usage_count: Number(row.usage_count ?? 0),
-          is_unused: Boolean(row.is_unused)
-        }));
-
-        data.jobsSummary = jobsSummaryRes.items || [];
-        data.topItems = topItemsRes.items || [];
-        data.topEmployees = topEmployeesRes.items || [];
-        data.monthlyTrend = (monthlyTrendRes.items || []).map((row) => {
-          const [yy, mm] = String(row.month).split('-');
-          return { month: `${Number(mm)}月`, count: Number(row.count ?? 0), _key: `${yy}-${mm}` };
-        });
-        data.records = recordsRes.items || [];
+        const res = await fetchJson('/api/v1/employees');
+        data.employees = res.items || [];
         apiAvailable = true;
       } catch (error) {
         apiAvailable = false;
-        console.warn('API 無法連線，已切回靜態資料。', error);
+        data.employees = data.fallbackEmployees;
+        console.warn('無法連線後端 API 取得員工名單，已載入靜態測試名單。', error);
+      }
+      populateEmployeesDatalist();
+    }
+
+    async function loadPersonalRecords() {
+      if (!state.selectedEmployee) {
+        data.personalRecords = [];
+        return;
+      }
+      try {
+        const res = await fetchJson('/api/v1/records', {
+          employee_code: state.selectedEmployee.employee_code,
+          start_date: state.startDate,
+          end_date: state.endDate,
+          limit: 150
+        });
+        data.personalRecords = res.items || [];
+        apiAvailable = true;
+      } catch (error) {
+        apiAvailable = false;
+        // 靜態備用資料過濾
+        data.personalRecords = data.fallbackRecords.filter(r =>
+          r.employee_code === state.selectedEmployee.employee_code &&
+          (!state.startDate || r.event_date >= state.startDate) &&
+          (!state.endDate || r.event_date <= state.endDate)
+        );
+        console.warn('無法連線後端 API 取得記點明細，已載入靜態備用記錄。', error);
       }
     }
 
-    function labelForJob(job) {
-      return `${job} ${['全員', '組員', '貼紙', '品保', '機台'][job] || '其他'}`;
-    }
-
-    function normalizeRoleGroup(job) {
-      const n = Number(job);
-      if (n === 0) return '0';
-      if (n === 1 || n === 2) return '1';
-      if (n === 5) return '5';
-      if (n === 6) return '6';
-      if (n === 4) return '4';
-      if (n === 3) return '3';
-      return '1';
-    }
-
-    function roleGroupLabel(key) {
-      const map = {
-        0: '全員',
-        1: '組員',
-        5: '線控',
-        6: '場控',
-        4: '機台',
-        3: '備料'
-      };
-      return map[key] || '組員';
-    }
-
-    function roleGroupOrder(key) {
-      const order = { 0: 0, 1: 1, 5: 2, 6: 3, 4: 4, 3: 5 };
-      return order[key] ?? 99;
-    }
-
-    function roleGroupFromRow(row) {
-      const rawJobs = Number(row.jobs);
-      if (!Number.isNaN(rawJobs)) {
-        return normalizeRoleGroup(rawJobs);
+    async function loadHandbookTypes() {
+      try {
+        const res = await fetchJson('/api/v1/types', { include_unused: true });
+        data.allTypes = res.items || [];
+        apiAvailable = true;
+      } catch (error) {
+        apiAvailable = false;
+        data.allTypes = data.fallbackTypes;
+        console.warn('無法連線後端 API 取得規章手冊，已載入靜態備用規章。', error);
       }
-
-      const itemCode = String(row.item_code || '');
-      const prefixMatch = itemCode.match(/^(\d+)/);
-      if (prefixMatch) {
-        return normalizeRoleGroup(Number(prefixMatch[1]));
-      }
-
-      return '1';
     }
 
-    function formatDateInput(date) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+    // ── UI 渲染邏輯 ──────────────────────────────────
+    function populateEmployeesDatalist() {
+      const datalist = document.getElementById('employees-list');
+      if (!datalist) return;
+      datalist.innerHTML = data.employees.map(emp =>
+        `<option value="${emp.employee_name} (${emp.employee_code})" data-code="${emp.employee_code}"></option>`
+      ).join('');
     }
 
-    function parseInputDate(value) {
-      if (!value) return null;
-      const date = new Date(`${value}T00:00:00`);
-      return Number.isNaN(date.getTime()) ? null : date;
-    }
+    function renderQueryPanel() {
+      const totalScoreVal = document.getElementById('total-score-val');
+      const totalScoreMaxVal = document.getElementById('total-score-max-val');
+      const scoreComment = document.getElementById('score-comment');
+      const personalRecordsBody = document.getElementById('personal-records-body');
+      const recordCountBadge = document.getElementById('record-count-badge');
+      const recordsMetaText = document.getElementById('records-meta-text');
 
-    function enforceThreeMonthRange(startId = 'date-start', endId = 'date-end') {
-      const startEl = document.getElementById(startId);
-      const endEl = document.getElementById(endId);
-      if (!startEl || !endEl) return;
-      const start = parseInputDate(startEl.value);
-      const end = parseInputDate(endEl.value);
-      if (!start || !end) return;
+      const scoreDim1 = document.getElementById('score-dim1');
+      const scoreDim2 = document.getElementById('score-dim2');
+      const scoreDim3 = document.getElementById('score-dim3');
 
-      const diffDays = Math.floor((end.getTime() - start.getTime()) / 86400000);
-      if (diffDays <= MAX_RANGE_DAYS) return;
+      const fillDim1 = document.getElementById('fill-dim1');
+      const fillDim2 = document.getElementById('fill-dim2');
+      const fillDim3 = document.getElementById('fill-dim3');
 
-      const adjusted = new Date(end);
-      adjusted.setDate(adjusted.getDate() - MAX_RANGE_DAYS);
-      startEl.value = formatDateInput(adjusted);
-    }
+      if (!state.selectedEmployee) {
+        // 尚未選擇組員狀態
+        totalScoreVal.textContent = '1200';
+        totalScoreMaxVal.textContent = ' / 1200';
+        scoreComment.textContent = '請輸入姓名或工號開始查詢';
+        scoreComment.style.color = 'var(--muted)';
 
-    function syncDateControls(fromStartId, fromEndId) {
-      const fromStart = document.getElementById(fromStartId);
-      const fromEnd = document.getElementById(fromEndId);
-      const statsStart = document.getElementById('date-start');
-      const statsEnd = document.getElementById('date-end');
-      const typesStart = document.getElementById('date-start-types');
-      const typesEnd = document.getElementById('date-end-types');
-      if (!fromStart || !fromEnd || !statsStart || !statsEnd || !typesStart || !typesEnd) return;
+        scoreDim1.textContent = '600 / 600';
+        scoreDim2.textContent = '200 / 200';
+        scoreDim3.textContent = '400 / 400';
 
-      statsStart.value = fromStart.value;
-      statsEnd.value = fromEnd.value;
-      typesStart.value = fromStart.value;
-      typesEnd.value = fromEnd.value;
-    }
+        fillDim1.style.width = '100%';
+        fillDim1.style.background = 'linear-gradient(90deg, var(--accent-2), #72a799)';
+        fillDim2.style.width = '100%';
+        fillDim2.style.background = 'linear-gradient(90deg, var(--accent-2), #72a799)';
+        fillDim3.style.width = '100%';
+        fillDim3.style.background = 'linear-gradient(90deg, var(--accent-2), #72a799)';
 
-    function initializeDateRangeDefault() {
-      const startEl = document.getElementById('date-start');
-      const endEl = document.getElementById('date-end');
-      const typesStartEl = document.getElementById('date-start-types');
-      const typesEndEl = document.getElementById('date-end-types');
-      if (!startEl || !endEl || !typesStartEl || !typesEndEl) return;
-      if (startEl.value || endEl.value || typesStartEl.value || typesEndEl.value) return;
-
-      const end = new Date();
-      const start = new Date(end);
-      start.setDate(start.getDate() - MAX_RANGE_DAYS);
-      startEl.value = formatDateInput(start);
-      endEl.value = formatDateInput(end);
-      typesStartEl.value = startEl.value;
-      typesEndEl.value = endEl.value;
-    }
-
-    function matchesType(row) {
-      const jobMatch = state.jobs === 'all' || String(row.jobs) === state.jobs;
-      const usageMatch = state.usage === 'all' || (state.usage === 'used' ? row.usage_count > 0 : row.usage_count === 0);
-      return jobMatch && usageMatch;
-    }
-
-    function renderTypes() {
-      const dropdownBody = document.getElementById('types-table-body-dropdown');
-      const dropdownMeta = document.getElementById('types-dropdown-meta');
-      const categorySelect = document.getElementById('type-category-filter');
-
-      const rows = data.typeRows.filter(matchesType);
-
-      const rowTemplate = (row) => {
-        const usagePill = row.is_unused ? '<span class="pill warn">尚未使用</span>' : `<span class="pill">${row.usage_count} 次</span>`;
-        const roleLabel = roleGroupLabel(roleGroupFromRow(row));
-        return `
-          <tr>
-            <td><strong>${row.item_code}</strong><br /><span class="muted">${roleLabel}</span></td>
-            <td>${row.category}</td>
-            <td>${row.points}</td>
-            <td>${usagePill}</td>
-          </tr>
-        `;
-      };
-
-      const categoryKeys = ['0', '1', '5', '6', '4', '3'];
-      const currentCategory = state.typeCategory;
-      if (currentCategory && !categoryKeys.includes(currentCategory)) {
-        state.typeCategory = '';
-      }
-
-      categorySelect.innerHTML = ['<option value="">請先選擇分類</option>', ...categoryKeys.map((key) => `<option value="${key}">${roleGroupLabel(key)}</option>`)].join('');
-      categorySelect.value = state.typeCategory;
-
-      if (!state.typeCategory) {
-        dropdownBody.innerHTML = '<tr><td colspan="4" class="muted">請先選擇分類，再顯示類型資訊。</td></tr>';
-        dropdownMeta.textContent = '尚未選擇分類';
+        personalRecordsBody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align: center; padding: 40px 0;">請在上方輸入或選擇人員以查詢其品質分數與記點明細。</td></tr>`;
+        recordCountBadge.textContent = '0 筆記錄';
+        recordsMetaText.textContent = '尚未選擇查詢人員。';
         return;
       }
 
-      const byCategoryRows = rows.filter((row) => roleGroupFromRow(row) === state.typeCategory);
+      // 1. 初始化各維度滿分
+      const maxDim1 = state.assessmentRole === 'machine' ? 1200 : 600;
+      const maxDim2 = 200;
+      const maxDim3 = 400;
+      const maxTotal = maxDim1 + maxDim2 + maxDim3;
 
-      dropdownBody.innerHTML = byCategoryRows.map(rowTemplate).join('') || '<tr><td colspan="4" class="muted">目前分類下沒有資料。</td></tr>';
-      dropdownMeta.textContent = `目前分類 ${byCategoryRows.length} 筆`;
-    }
+      let score1 = maxDim1;
+      let score2 = maxDim2;
+      let score3 = maxDim3;
 
-    function renderJobsSummary() {
-      const container = document.getElementById('jobs-summary-list');
-      const filtered = data.typeRows.filter(matchesType);
-      const grouped = new Map();
+      // 2. 計算扣分
+      const listRows = data.personalRecords.map(rec => {
+        const date = rec.event_date ? String(rec.event_date).slice(0, 10) : '-';
+        const dim = getDimension(rec.category, rec.subcategory);
+        const pts = Number(rec.points || 0);
+        const penaltyVal = Math.abs(pts);
+        const deduction = penaltyVal * DEDUCTION_MULTIPLIER;
 
-      filtered.forEach((row) => {
-        const key = roleGroupFromRow(row);
-        if (!grouped.has(key)) {
-          grouped.set(key, {
-            jobs: key,
-            label: roleGroupLabel(key),
-            total_types: 0,
-            used_types: 0,
-            unused_types: 0
-          });
-        }
+        if (dim === 1) score1 -= deduction;
+        else if (dim === 2) score2 -= deduction;
+        else if (dim === 3) score3 -= deduction;
 
-        const entry = grouped.get(key);
-        entry.total_types += 1;
-        if (Number(row.usage_count) > 0) {
-          entry.used_types += 1;
-        } else {
-          entry.unused_types += 1;
-        }
-      });
+        const dimLabel = DIMENSION_LABELS[dim] || '其他';
+        const notes = rec.notes && rec.notes.trim() ? rec.notes : '無備註事由';
 
-      const rows = ['0', '1', '5', '6', '4', '3'].map((key) => grouped.get(key) || {
-        jobs: key,
-        label: roleGroupLabel(key),
-        total_types: 0,
-        used_types: 0,
-        unused_types: 0
-      });
-      container.innerHTML = rows.map((row) => {
-        const usedPercent = row.total_types > 0 ? Math.round((row.used_types / row.total_types) * 100) : 0;
-        return `
-          <div class="bar-item">
-            <div class="bar-top"><span>${row.label}</span><span>${row.used_types} / ${row.total_types}</span></div>
-            <div class="bar-track"><div class="bar-fill" style="width: ${usedPercent}%"></div></div>
-          </div>
-        `;
-      }).join('') || '<div class="muted">目前篩選條件下沒有分類概況。</div>';
-    }
-
-    function renderTopItems() {
-      const container = document.getElementById('top-items-list');
-      const maxCount = Math.max(...data.topItems.map((row) => row.count));
-      container.innerHTML = data.topItems.map((row) => {
-        const width = Math.round((row.count / maxCount) * 100);
-        return `
-          <div class="bar-item">
-            <div class="bar-top"><span>${row.group_name}</span><span>${row.count}</span></div>
-            <div class="bar-track"><div class="bar-fill" style="width: ${width}%"></div></div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderEmployees() {
-      const body = document.getElementById('employees-table-body');
-      body.innerHTML = data.topEmployees.map((row) => {
-        const employeeCode = row.employee_code || row.employee_id || '未填';
-        const chips = row.position_breakdown.map((item, index) => `<span class="pill ${index > 0 ? 'gray' : ''}">${item.employee_position} ${item.count}</span>`).join(' ');
-        return `
-          <tr>
-            <td><strong>${row.employee_name}</strong><br /><span class="muted">${employeeCode}</span></td>
-            <td>${row.total_count}</td>
-            <td>${chips}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function renderTrend() {
-      const container = document.getElementById('trend-row');
-      const maxCount = Math.max(...data.monthlyTrend.map((row) => row.count));
-      container.innerHTML = data.monthlyTrend.map((row) => {
-        const height = Math.max(24, Math.round((row.count / maxCount) * 100));
-        return `
-          <div class="month" style="--h: ${height}%"><div class="stick"></div><span>${row.month}</span></div>
-        `;
-      }).join('');
-    }
-
-    function renderRecords() {
-      const body = document.getElementById('records-table-body');
-      let rows = data.records || [];
-      if (state.typeCategory) {
-        rows = rows.filter((row) => roleGroupFromRow(row) === state.typeCategory);
-      }
-      body.innerHTML = rows.map((row) => {
-        const date = row.event_date ? String(row.event_date).slice(0, 10) : '-';
-        const who = `${row.employee_name || '未填'} ${row.employee_code || ''}`.trim();
-        const detail = `${row.item_code || '-'}｜${row.category || '-'}｜${row.subcategory || '-'}`;
-        const notes = row.notes && String(row.notes).trim() ? row.notes : '無';
-        const points = Number(row.points || 0);
         return `
           <tr>
             <td>${date}</td>
-            <td><strong>${who}</strong><br /><span class="muted">${row.employee_position || '未填'}</span></td>
-            <td>${detail}</td>
-            <td>${notes}</td>
-            <td>${points}</td>
+            <td><span class="pill ${dim === 3 ? 'warn' : dim === 2 ? 'gray' : ''}">${dimLabel}</span></td>
+            <td><strong>${rec.item_code || '-'}</strong><br/><span class="muted" style="font-size:12px;">${rec.subcategory || '-'}</span></td>
+            <td style="font-size:14px; max-width: 400px; word-break: break-all;">${notes}</td>
+            <td style="text-align: center; font-weight:800; color:var(--danger);">${pts} 點</td>
           </tr>
         `;
-      }).join('') || '<tr><td colspan="5" class="muted">目前篩選條件下沒有明細資料。</td></tr>';
+      });
+
+      // 總分計算 (防止負分在總評顯示異常，但可真實呈現數值)
+      const totalScore = score1 + score2 + score3;
+      totalScoreVal.textContent = totalScore;
+      totalScoreMaxVal.textContent = ` / ${maxTotal}`;
+
+      // 分數評語與視覺回饋
+      if (totalScore >= maxTotal) {
+        scoreComment.textContent = '✨ 完美考核分數！品質極佳，無任何記點。';
+        scoreComment.style.color = 'var(--accent-2)';
+        totalScoreVal.style.color = 'var(--accent-2)';
+      } else if (totalScore >= maxTotal - 2) {
+        scoreComment.textContent = '👍 品質狀況優良，請繼續保持。';
+        scoreComment.style.color = 'var(--accent-2)';
+        totalScoreVal.style.color = 'var(--text)';
+      } else if (totalScore >= maxTotal - 5) {
+        scoreComment.textContent = '⚠️ 偶有作業失誤，請稍加注意作業流程。';
+        scoreComment.style.color = 'var(--accent)';
+        totalScoreVal.style.color = 'var(--accent)';
+      } else {
+        scoreComment.textContent = '❌ 作業扣分較多，請務必詳閱規章以防重複犯錯。';
+        scoreComment.style.color = 'var(--danger)';
+        totalScoreVal.style.color = 'var(--danger)';
+      }
+
+      // 填寫維度數值
+      scoreDim1.textContent = `${score1} / ${maxDim1}`;
+      scoreDim2.textContent = `${score2} / ${maxDim2}`;
+      scoreDim3.textContent = `${score3} / ${maxDim3}`;
+
+      // 進度條長度比例及漸層樣式
+      const updateProgressFill = (fillEl, score, max) => {
+        const percent = Math.max(0, Math.min(100, Math.round((score / max) * 100)));
+        fillEl.style.width = `${percent}%`;
+        if (percent === 100) {
+          fillEl.style.background = 'linear-gradient(90deg, var(--accent-2), #72a799)';
+        } else if (percent >= 80) {
+          fillEl.style.background = 'linear-gradient(90deg, var(--accent), #e48b4f)';
+        } else {
+          fillEl.style.background = 'linear-gradient(90deg, var(--danger), #e46b70)';
+        }
+      };
+
+      updateProgressFill(fillDim1, score1, maxDim1);
+      updateProgressFill(fillDim2, score2, maxDim2);
+      updateProgressFill(fillDim3, score3, maxDim3);
+
+      // 渲染表格
+      if (listRows.length > 0) {
+        personalRecordsBody.innerHTML = listRows.join('');
+      } else {
+        personalRecordsBody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align: center; padding: 40px 0;">在此查詢區間內，無任何記點扣分紀錄。</td></tr>`;
+      }
+
+      recordCountBadge.textContent = `${listRows.length} 筆記錄`;
+      recordsMetaText.textContent = `顯示 ${state.selectedEmployee.employee_name} (${state.selectedEmployee.employee_code}) 的記點記錄。`;
     }
 
-    function syncStateFromControls() {
-      state.jobs = document.getElementById('jobs-filter').value;
-      state.usage = document.getElementById('usage-filter').value;
-      state.typeCategory = document.getElementById('type-category-filter').value;
-      state.position = document.getElementById('position-filter').value;
-      state.startDate = document.getElementById('date-start-types').value || document.getElementById('date-start').value;
-      state.endDate = document.getElementById('date-end-types').value || document.getElementById('date-end').value;
-      state.jobsStats = document.getElementById('jobs-stat-filter').value;
+    function renderHandbook() {
+      const dim1Body = document.getElementById('handbook-dim1-body');
+      const dim2Body = document.getElementById('handbook-dim2-body');
+      const dim3Body = document.getElementById('handbook-dim3-body');
+
+      const filterJob = state.handbookJob;
+
+      // 過濾職位規章
+      const filteredTypes = data.allTypes.filter(t => {
+        if (filterJob === 'all') return true;
+        return String(t.jobs) === filterJob;
+      });
+
+      const dimLists = { 1: [], 2: [], 3: [] };
+
+      filteredTypes.forEach(t => {
+        const dim = getDimension(t.category, t.subcategory);
+        const pts = Number(t.points || 0);
+
+        const rowHtml = `
+          <tr>
+            <td style="padding-left: 14px; font-weight:700;">${t.item_code}</td>
+            <td><strong>${t.subcategory}</strong><br/><span class="muted" style="font-size:12px;">分類: ${t.category}</span></td>
+            <td style="text-align: center; padding-right: 14px; font-weight:800; color:var(--accent); white-space:nowrap;">${pts} 點</td>
+          </tr>
+        `;
+        if (dimLists[dim]) {
+          dimLists[dim].push(rowHtml);
+        }
+      });
+
+      const emptyTemplate = `<tr><td colspan="3" class="muted" style="text-align: center; padding: 20px 0;">此維度下無符合此職位的規章條款。</td></tr>`;
+
+      dim1Body.innerHTML = dimLists[1].join('') || emptyTemplate;
+      dim2Body.innerHTML = dimLists[2].join('') || emptyTemplate;
+      dim3Body.innerHTML = dimLists[3].join('') || emptyTemplate;
     }
 
     function renderAll() {
-      renderTypes();
-      renderJobsSummary();
-      renderTopItems();
-      renderEmployees();
-      renderTrend();
-      renderRecords();
+      renderQueryPanel();
+      renderHandbook();
     }
 
-    buttons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const target = button.dataset.target;
-        buttons.forEach((item) => item.classList.toggle('active', item === button));
-        panels.forEach((panel) => panel.classList.toggle('active', panel.id === target));
+    // ── 事件處理與綁定 ─────────────────────────────
+    function bindEvents() {
+      // 1. 頁面切換導覽
+      const navButtons = Array.from(document.querySelectorAll('.nav button'));
+      const panels = Array.from(document.querySelectorAll('.panel'));
+      navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.target;
+          navButtons.forEach(item => item.classList.toggle('active', item === btn));
+          panels.forEach(panel => panel.classList.toggle('active', panel.id === target));
+          // 切換至規章手冊時，確保有渲染
+          if (target === 'handbook-panel') {
+            renderHandbook();
+          }
+        });
       });
-    });
 
-    ['jobs-filter', 'usage-filter', 'type-category-filter', 'position-filter', 'date-start', 'date-end', 'date-start-types', 'date-end-types', 'jobs-stat-filter'].forEach((id) => {
-      document.getElementById(id).addEventListener('input', () => {
-        if (id === 'date-start-types' || id === 'date-end-types') {
-          enforceThreeMonthRange('date-start-types', 'date-end-types');
-          syncDateControls('date-start-types', 'date-end-types');
-        } else if (id === 'date-start' || id === 'date-end') {
-          enforceThreeMonthRange('date-start', 'date-end');
-          syncDateControls('date-start', 'date-end');
-        } else {
-          enforceThreeMonthRange('date-start-types', 'date-end-types');
-          syncDateControls('date-start-types', 'date-end-types');
-        }
-        syncStateFromControls();
-        renderAll();
-        loadRemoteData().finally(renderAll);
-      });
-      document.getElementById(id).addEventListener('change', () => {
-        if (id === 'date-start-types' || id === 'date-end-types') {
-          enforceThreeMonthRange('date-start-types', 'date-end-types');
-          syncDateControls('date-start-types', 'date-end-types');
-        } else if (id === 'date-start' || id === 'date-end') {
-          enforceThreeMonthRange('date-start', 'date-end');
-          syncDateControls('date-start', 'date-end');
-        } else {
-          enforceThreeMonthRange('date-start-types', 'date-end-types');
-          syncDateControls('date-start-types', 'date-end-types');
-        }
-        syncStateFromControls();
-        renderAll();
-        loadRemoteData().finally(renderAll);
-      });
-    });
+      // 2. 人員搜尋輸入監聽
+      const empSearchInput = document.getElementById('employee-search');
+      empSearchInput.addEventListener('input', () => {
+        const val = empSearchInput.value.trim();
+        // 檢查是否符合名單中的 "員工名 (工號)" 格式
+        const matched = data.employees.find(emp =>
+          `${emp.employee_name} (${emp.employee_code})` === val || emp.employee_code === val
+        );
 
-    initializeDateRangeDefault();
-    enforceThreeMonthRange('date-start-types', 'date-end-types');
-    syncDateControls('date-start-types', 'date-end-types');
-    document.getElementById('type-category-filter').value = state.typeCategory;
-    syncStateFromControls();
-    renderAll();
-    loadRemoteData().finally(renderAll);
+        if (matched) {
+          state.selectedEmployee = matched;
+
+          // 自動識別身分標準
+          const pos = String(matched.latest_position || '');
+          if (pos.includes('機台') || pos.includes('4')) {
+            state.assessmentRole = 'machine';
+          } else {
+            state.assessmentRole = 'crew';
+          }
+          syncRoleToggleUI();
+
+          // 重新載入明細並渲染
+          loadPersonalRecords().then(renderQueryPanel);
+        } else if (val === '') {
+          state.selectedEmployee = null;
+          renderQueryPanel();
+        }
+      });
+
+      // 清除按鈕或完全無符合則不更新
+      empSearchInput.addEventListener('change', () => {
+        if (empSearchInput.value.trim() === '') {
+          state.selectedEmployee = null;
+          renderQueryPanel();
+        }
+      });
+
+      // 3. 身分標準切換按鈕
+      const roleCrewBtn = document.getElementById('role-crew-btn');
+      const roleMachineBtn = document.getElementById('role-machine-btn');
+
+      roleCrewBtn.addEventListener('click', () => {
+        state.assessmentRole = 'crew';
+        syncRoleToggleUI();
+        renderQueryPanel();
+      });
+
+      roleMachineBtn.addEventListener('click', () => {
+        state.assessmentRole = 'machine';
+        syncRoleToggleUI();
+        renderQueryPanel();
+      });
+
+      function syncRoleToggleUI() {
+        roleCrewBtn.classList.toggle('active', state.assessmentRole === 'crew');
+        roleMachineBtn.classList.toggle('active', state.assessmentRole === 'machine');
+      }
+
+      // 4. 日期區間變更監聽
+      const dateStartInput = document.getElementById('date-start-query');
+      const dateEndInput = document.getElementById('date-end-query');
+
+      [dateStartInput, dateEndInput].forEach(el => {
+        el.addEventListener('change', () => {
+          enforceThreeMonthRange('date-start-query', 'date-end-query');
+          state.startDate = dateStartInput.value;
+          state.endDate = dateEndInput.value;
+          if (state.selectedEmployee) {
+            loadPersonalRecords().then(renderQueryPanel);
+          }
+        });
+      });
+
+      // 5. 規章手冊職位篩選
+      const hbJobsFilter = document.getElementById('handbook-jobs-filter');
+      hbJobsFilter.addEventListener('change', () => {
+        state.handbookJob = hbJobsFilter.value;
+        renderHandbook();
+      });
+    }
+
+    // ── 初始化啟動 ───────────────────────────────
+    window.addEventListener('DOMContentLoaded', async () => {
+      initializeDateRangeDefault();
+      bindEvents();
+
+      // 先載入員工與規章列表
+      await Promise.all([
+        loadEmployees(),
+        loadHandbookTypes()
+      ]);
+
+      renderAll();
+    });
   </script>
 </body>
 
