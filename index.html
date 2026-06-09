@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>包裝記點記錄</title>
+  <style>
+    :root {
+      --bg: #f4efe8;
+      --bg-2: #eadfce;
+      --card: rgba(255, 255, 255, 0.78);
+      --text: #1f1a17;
+      --muted: #6f6458;
+      --accent: #b85c38;
+      --accent-2: #2f6b5f;
+      --danger: #b73239;
+      --border: rgba(47, 31, 20, 0.12);
+      --shadow: 0 18px 50px rgba(60, 38, 24, 0.12);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(184, 92, 56, 0.16), transparent 34%),
+        radial-gradient(circle at top right, rgba(47, 107, 95, 0.15), transparent 28%),
+        linear-gradient(180deg, var(--bg) 0%, #f8f4ee 42%, #f6f1e8 100%);
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .app-head {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.78);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+      margin-bottom: 14px;
+    }
+
+    .app-head h1 {
+      margin: 0;
+      font-size: clamp(22px, 4vw, 32px);
+      letter-spacing: -0.02em;
+    }
+
+    .app-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 18px 0;
+    }
+
+    .nav button {
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .nav button:hover {
+      transform: translateY(-1px);
+      background: #fff;
+    }
+
+    .nav button.active {
+      background: var(--text);
+      color: #fff;
+      border-color: var(--text);
+    }
+
+    .panel {
+      display: none;
+      animation: fadeUp 0.35s ease both;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .toolbar,
+    .subtoolbar {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      margin-bottom: 16px;
+    }
+
+    .field {
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 7px;
+    }
+
+    .field select,
+    .field input {
+      width: 100%;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card.full-span {
+      grid-column: 1 / -1;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 18px 0;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .card-header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(184, 92, 56, 0.1);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .card-body {
+      padding: 18px;
+    }
+
+    .view-switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .view-switch label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .view-switch select {
+      border: 1px solid rgba(47, 31, 20, 0.12);
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .collapsible {
+      border: 1px solid rgba(47, 31, 20, 0.08);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.55);
+      overflow: hidden;
+    }
+
+    .collapsible summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 1px solid transparent;
+    }
+
+    .collapsible summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .collapsible[open] summary {
+      border-bottom-color: rgba(47, 31, 20, 0.08);
+    }
+
+    .collapsible-content {
+      padding: 0 10px 10px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+      text-align: left;
+      padding: 12px 8px;
+      border-bottom: 1px solid rgba(47, 31, 20, 0.08);
+      vertical-align: top;
+      font-size: 15px;
+    }
+
+    .table th {
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .type-table-scroll {
+      max-height: 360px;
+      overflow-y: auto;
+      border-radius: 12px;
+    }
+
+    .type-table-scroll .table th {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.94);
+      z-index: 1;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(47, 107, 95, 0.1);
+      color: var(--accent-2);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .pill.warn {
+      background: rgba(183, 50, 57, 0.1);
+      color: var(--danger);
+    }
+
+    .pill.gray {
+      background: rgba(111, 100, 88, 0.11);
+      color: var(--muted);
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .bar-item {
+      display: grid;
+      gap: 8px;
+    }
+
+    .bar-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .bar-track {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(47, 31, 20, 0.08);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), #e48b4f);
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      align-items: end;
+      min-height: 220px;
+      margin-top: 18px;
+    }
+
+    .month {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .month .stick {
+      width: 100%;
+      height: var(--h);
+      min-height: 24px;
+      border-radius: 16px 16px 8px 8px;
+      background: linear-gradient(180deg, var(--accent-2), #72a799);
+      box-shadow: inset 0 -10px 20px rgba(255, 255, 255, 0.18);
+    }
+
+    .month span {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .legend i {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .footnote {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .policy-inline {
+      margin-bottom: 16px;
+    }
+
+    .policy-inline ul {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      display: grid;
+      gap: 6px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        padding: 14px 12px 32px;
+      }
+
+      .app-head,
+      .card {
+        border-radius: 22px;
+      }
+
+      .card-body,
+      .card-header {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .table th,
+      .table td {
+        padding-left: 6px;
+        padding-right: 6px;
+      }
+
+      .chart-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="shell">
+    <header class="app-head">
+      <h1>包裝記點記錄</h1>
+      <p>僅包含頁面一（hr_miss_record_types）與頁面二（hr_miss_records）。</p>
+    </header>
+
+    <nav class="nav" aria-label="頁面切換">
+      <button class="active" data-target="types-panel">頁面一：記點類型總覽</button>
+      <button data-target="stats-panel">頁面二：記錄統計</button>
+    </nav>
+
+    <section id="types-panel" class="panel active">
+      <div class="toolbar">
+        <div class="field">
+          <label for="jobs-filter">jobs 分類</label>
+          <select id="jobs-filter">
+            <option value="all">全部</option>
+            <option value="0">0 全員</option>
+            <option value="1">1 組員</option>
+            <option value="2">2 貼紙</option>
+            <option value="3">3 品保</option>
+            <option value="4">4 機台</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="usage-filter">使用狀態</label>
+          <select id="usage-filter">
+            <option value="all">全部</option>
+            <option value="used">僅已使用</option>
+            <option value="unused">僅未使用</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="date-start-types">開始日期</label>
+          <input id="date-start-types" type="date" />
+        </div>
+        <div class="field">
+          <label for="date-end-types">結束日期</label>
+          <input id="date-end-types" type="date" />
+        </div>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>類型清單</h2>
+              <p>依 jobs 分群，顯示 item_code、category、subcategory、points 與使用次數。</p>
+            </div>
+            <span class="badge">未使用類型會標示</span>
+          </div>
+          <div class="card-body">
+            <div id="types-view-dropdown">
+              <div class="field" style="margin-bottom: 10px;">
+                <label for="type-category-filter">分類下拉篩選</label>
+                <select id="type-category-filter">
+                  <option value="all">全部分類</option>
+                </select>
+              </div>
+              <div class="muted" id="types-dropdown-meta" style="font-size: 13px; margin-bottom: 8px;">-</div>
+              <div class="type-table-scroll">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>item_code</th>
+                      <th>分類</th>
+                      <th>points</th>
+                      <th>使用次數</th>
+                    </tr>
+                  </thead>
+                  <tbody id="types-table-body-dropdown"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>分類概況</h2>
+              <p>各 jobs 的總數、已使用與未使用情況，方便做篩選器摘要。</p>
+            </div>
+            <span class="badge">jobs summary</span>
+          </div>
+          <div class="card-body">
+            <div class="bar-list" id="jobs-summary-list"></div>
+            <div class="footnote">未使用的類型可以用淺色或警示標籤標出，便於管理者快速看出哪些規則長期沒有被用到。</div>
+          </div>
+        </article>
+
+        <article class="card full-span">
+          <div class="card-header">
+            <div>
+              <h2>記點明細（含備註事由）</h2>
+              <p>顯示實際被記錄的細項內容與 notes 備註，預設最近 100 筆。</p>
+            </div>
+            <span class="badge">Records</span>
+          </div>
+          <div class="card-body">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>人員</th>
+                  <th>細項</th>
+                  <th>備註事由</th>
+                  <th>點數</th>
+                </tr>
+              </thead>
+              <tbody id="records-table-body"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="stats-panel" class="panel">
+      <article class="card policy-inline">
+        <div class="card-header">
+          <div>
+            <h2>包裝條例總覽（依 PDF）</h2>
+            <p>依「包裝作業條例規範.pdf」整理重點，先看規範再看統計，避免只看數字不看行為標準。</p>
+          </div>
+          <span class="badge">頁面二說明</span>
+        </div>
+        <div class="card-body">
+          <ul>
+            <li>出勤與工時紀律：晨會後不得逗留、午休與下午休息後需準時回崗，違反多為 1 點。</li>
+            <li>開線前檢核：機台下菜前需確認袋模、保鮮膜、打點/打印位置、首包檢查與組合秤設定，造成重工多為 2 至 3 點。</li>
+            <li>生產中回報：機台或原料異常需即時回報；未回報導致效率下降或客訴，屬高風險（常見 2 至 3 點）。</li>
+            <li>流程與服從：不得擅自換位、擅離、私事離崗或不服從線控指令；依情節多為 1 至 3 點。</li>
+            <li>收尾與衛生：包材/設備歸位、環境清潔、工作車與機台整理、休息室與冰箱規範，違反多為 1 至 2 點（部分含罰款）。</li>
+            <li>排班與請假：加班需配合排程，臨時/長假需提前通報；出勤人數有下限，違規會影響考核。</li>
+            <li>安全與稽核規範：使用拖板車未依規定操作、操作機台未按暫停等，以確保作業安全與遵守稽核規範。</li>
+          </ul>
+        </div>
+      </article>
+
+      <div class="subtoolbar">
+        <div class="field">
+          <label for="position-filter">職位</label>
+          <select id="position-filter">
+            <option value="all">全部職位</option>
+            <option value="crew">組員</option>
+            <option value="sticker">貼紙</option>
+            <option value="qa">品保</option>
+            <option value="machine">機台</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="date-start">開始日期</label>
+          <input id="date-start" type="date" />
+        </div>
+        <div class="field">
+          <label for="date-end">結束日期</label>
+          <input id="date-end" type="date" />
+        </div>
+        <div class="field">
+          <label for="jobs-stat-filter">jobs 篩選</label>
+          <select id="jobs-stat-filter">
+            <option value="all">全部 jobs</option>
+            <option value="0">0 全員</option>
+            <option value="1">1 組員</option>
+            <option value="2">2 貼紙</option>
+            <option value="3">3 品保</option>
+            <option value="4">4 機台</option>
+          </select>
+        </div>
+      </div>
+      <div class="footnote">目前查詢區間限制為 3 個月內（約 92 天）。</div>
+
+      <div class="grid">
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>最常被記的事項</h2>
+              <p>統計以 types 表的 subcategory 為準，並保留 2貼紙-3 / 2貼紙-4 的合併規則。</p>
+            </div>
+            <span class="badge">Top items</span>
+          </div>
+          <div class="card-body">
+            <div class="bar-list" id="top-items-list"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>誰被記最多</h2>
+              <p>以員工編號（employee_code）+ 工通姓名合併計算總數，再展開職位明細。</p>
+            </div>
+            <span class="badge">Top employees</span>
+          </div>
+          <div class="card-body">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>人員</th>
+                  <th>總數</th>
+                  <th>職位明細</th>
+                </tr>
+              </thead>
+              <tbody id="employees-table-body"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>按月份趨勢</h2>
+              <p>先做成簡單的直條視覺，後續可改成圖表套件或 ECharts。</p>
+            </div>
+            <span class="badge">Monthly trend</span>
+          </div>
+          <div class="card-body">
+            <div class="legend">
+              <span><i style="background: var(--accent-2)"></i>總記點數</span>
+              <span><i style="background: var(--accent)"></i>可切換職位 / jobs</span>
+            </div>
+            <div class="chart-row" id="trend-row" aria-label="月份趨勢圖"></div>
+            <div class="footnote">這裡顯示的是靜態範例資料，等 API 完成後可以直接把月份數值替換成後端回傳結果。</div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const buttons = Array.from(document.querySelectorAll('.nav button'));
+    const panels = Array.from(document.querySelectorAll('.panel'));
+    const API_BASE = 'http://127.0.0.1:8000';
+    const MAX_RANGE_DAYS = 92;
+    let apiAvailable = true;
+
+    const state = {
+      jobs: 'all',
+      usage: 'all',
+      typeCategory: '',
+      position: 'all',
+      jobsStats: 'all',
+      startDate: '',
+      endDate: ''
+    };
+
+    const data = {
+      typeRows: [
+        { item_code: '2貼紙-3', jobs: 2, category: '標籤印製錯誤', subcategory: 'label_print_error', points: -2, usage_count: 18, is_unused: false },
+        { item_code: '2貼紙-4', jobs: 2, category: '標籤印製錯誤', subcategory: 'label_print_error', points: -3, usage_count: 11, is_unused: false },
+        { item_code: '4機台-2', jobs: 4, category: '機台巡檢', subcategory: 'machine_check', points: -1, usage_count: 0, is_unused: true },
+        { item_code: '1組員-5', jobs: 1, category: '組員紀律', subcategory: 'team_discipline', points: -1, usage_count: 0, is_unused: true },
+        { item_code: '0全員-2', jobs: 0, category: '作業區未清潔', subcategory: 'workspace_cleanliness', points: -1, usage_count: 9, is_unused: false }
+      ],
+      jobsSummary: [
+        { jobs: 0, label: '0 全員', total_types: 30, used_types: 24, unused_types: 6 },
+        { jobs: 1, label: '1 組員', total_types: 18, used_types: 11, unused_types: 7 },
+        { jobs: 2, label: '2 貼紙', total_types: 20, used_types: 15, unused_types: 5 },
+        { jobs: 3, label: '3 品保', total_types: 8, used_types: 4, unused_types: 4 },
+        { jobs: 4, label: '4 機台', total_types: 8, used_types: 3, unused_types: 5 }
+      ],
+      topItems: [
+        { group_key: 'label_print_error', group_name: '標籤印製錯誤', count: 29 },
+        { group_key: 'package_count_mismatch', group_name: '包裝數量不符', count: 22 },
+        { group_key: 'workspace_dirty', group_name: '作業區未清潔', count: 17 },
+        { group_key: 'procedure_violation', group_name: '流程未遵守', count: 12 }
+      ],
+      topEmployees: [
+        { employee_code: 'E1024', employee_name: '陳○廷', total_count: 14, position_breakdown: [{ employee_position: '組員', count: 9 }, { employee_position: '貼紙', count: 5 }] },
+        { employee_code: 'E1188', employee_name: '黃○瑄', total_count: 11, position_breakdown: [{ employee_position: '品保', count: 11 }] },
+        { employee_code: 'E1202', employee_name: '林○翔', total_count: 9, position_breakdown: [{ employee_position: '機台', count: 6 }, { employee_position: '組員', count: 3 }] }
+      ],
+      monthlyTrend: [
+        { month: '1月', count: 42 },
+        { month: '2月', count: 58 },
+        { month: '3月', count: 44 },
+        { month: '4月', count: 72 },
+        { month: '5月', count: 64 },
+        { month: '6月', count: 88 }
+      ],
+      records: [
+        {
+          event_date: '2026-06-05',
+          employee_name: '陳怡靜',
+          employee_code: '0688',
+          employee_position: '1組員',
+          item_code: '0全員-8',
+          category: '效率與團隊作業',
+          subcategory: '因重工導致缺誤裝排程效率',
+          notes: '做PLB洋菇（領料）把第一第二盒被包和第三盒被包放到一起未跟收箱人員和工主對人員講，導致第二筆履歷另一張收箱人員不曉得以為是收箱有誤。',
+          points: -1
+        }
+      ]
+    };
+
+    function toQuery(params) {
+      const sp = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => {
+        if (v === null || v === undefined || v === '' || v === 'all') return;
+        sp.set(k, String(v));
+      });
+      const q = sp.toString();
+      return q ? `?${q}` : '';
+    }
+
+    async function fetchJson(path, params = {}) {
+      const res = await fetch(`${API_BASE}${path}${toQuery(params)}`);
+      if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+      return res.json();
+    }
+
+    async function loadRemoteData() {
+      try {
+        const [typesRes, jobsSummaryRes, topItemsRes, topEmployeesRes, monthlyTrendRes, recordsRes] = await Promise.all([
+          fetchJson('/api/v1/types', {
+            jobs: state.jobs,
+            include_unused: true
+          }),
+          fetchJson('/api/v1/types/jobs-summary'),
+          fetchJson('/api/v1/stats/top-items', {
+            start_date: state.startDate,
+            end_date: state.endDate,
+            employee_position: state.position,
+            jobs: state.jobsStats,
+            limit: 20
+          }),
+          fetchJson('/api/v1/stats/top-employees', {
+            start_date: state.startDate,
+            end_date: state.endDate,
+            employee_position: state.position,
+            limit: 20
+          }),
+          fetchJson('/api/v1/stats/monthly-trend', {
+            start_month: state.startDate ? state.startDate.slice(0, 7) : '',
+            end_month: state.endDate ? state.endDate.slice(0, 7) : '',
+            employee_position: state.position,
+            jobs: state.jobsStats
+          }),
+          fetchJson('/api/v1/records', {
+            start_date: state.startDate,
+            end_date: state.endDate,
+            employee_position: state.position,
+            jobs: state.jobsStats,
+            limit: 100
+          })
+        ]);
+
+        data.typeRows = (typesRes.items || []).map((row) => ({
+          item_code: row.item_code,
+          jobs: Number(row.jobs),
+          category: row.category,
+          subcategory: row.subcategory,
+          points: Number(row.points ?? 0),
+          usage_count: Number(row.usage_count ?? 0),
+          is_unused: Boolean(row.is_unused)
+        }));
+
+        data.jobsSummary = jobsSummaryRes.items || [];
+        data.topItems = topItemsRes.items || [];
+        data.topEmployees = topEmployeesRes.items || [];
+        data.monthlyTrend = (monthlyTrendRes.items || []).map((row) => {
+          const [yy, mm] = String(row.month).split('-');
+          return { month: `${Number(mm)}月`, count: Number(row.count ?? 0), _key: `${yy}-${mm}` };
+        });
+        data.records = recordsRes.items || [];
+        apiAvailable = true;
+      } catch (error) {
+        apiAvailable = false;
+        console.warn('API 無法連線，已切回靜態資料。', error);
+      }
+    }
+
+    function labelForJob(job) {
+      return `${job} ${['全員', '組員', '貼紙', '品保', '機台'][job] || '其他'}`;
+    }
+
+    function normalizeRoleGroup(job) {
+      const n = Number(job);
+      if (n === 0) return '0';
+      if (n === 1 || n === 2) return '1';
+      if (n === 5) return '5';
+      if (n === 6) return '6';
+      if (n === 4) return '4';
+      if (n === 3) return '3';
+      return '1';
+    }
+
+    function roleGroupLabel(key) {
+      const map = {
+        0: '全員',
+        1: '組員',
+        5: '線控',
+        6: '場控',
+        4: '機台',
+        3: '備料'
+      };
+      return map[key] || '組員';
+    }
+
+    function roleGroupOrder(key) {
+      const order = { 0: 0, 1: 1, 5: 2, 6: 3, 4: 4, 3: 5 };
+      return order[key] ?? 99;
+    }
+
+    function roleGroupFromRow(row) {
+      const rawJobs = Number(row.jobs);
+      if (!Number.isNaN(rawJobs)) {
+        return normalizeRoleGroup(rawJobs);
+      }
+
+      const itemCode = String(row.item_code || '');
+      const prefixMatch = itemCode.match(/^(\d+)/);
+      if (prefixMatch) {
+        return normalizeRoleGroup(Number(prefixMatch[1]));
+      }
+
+      return '1';
+    }
+
+    function formatDateInput(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseInputDate(value) {
+      if (!value) return null;
+      const date = new Date(`${value}T00:00:00`);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function enforceThreeMonthRange(startId = 'date-start', endId = 'date-end') {
+      const startEl = document.getElementById(startId);
+      const endEl = document.getElementById(endId);
+      if (!startEl || !endEl) return;
+      const start = parseInputDate(startEl.value);
+      const end = parseInputDate(endEl.value);
+      if (!start || !end) return;
+
+      const diffDays = Math.floor((end.getTime() - start.getTime()) / 86400000);
+      if (diffDays <= MAX_RANGE_DAYS) return;
+
+      const adjusted = new Date(end);
+      adjusted.setDate(adjusted.getDate() - MAX_RANGE_DAYS);
+      startEl.value = formatDateInput(adjusted);
+    }
+
+    function syncDateControls(fromStartId, fromEndId) {
+      const fromStart = document.getElementById(fromStartId);
+      const fromEnd = document.getElementById(fromEndId);
+      const statsStart = document.getElementById('date-start');
+      const statsEnd = document.getElementById('date-end');
+      const typesStart = document.getElementById('date-start-types');
+      const typesEnd = document.getElementById('date-end-types');
+      if (!fromStart || !fromEnd || !statsStart || !statsEnd || !typesStart || !typesEnd) return;
+
+      statsStart.value = fromStart.value;
+      statsEnd.value = fromEnd.value;
+      typesStart.value = fromStart.value;
+      typesEnd.value = fromEnd.value;
+    }
+
+    function initializeDateRangeDefault() {
+      const startEl = document.getElementById('date-start');
+      const endEl = document.getElementById('date-end');
+      const typesStartEl = document.getElementById('date-start-types');
+      const typesEndEl = document.getElementById('date-end-types');
+      if (!startEl || !endEl || !typesStartEl || !typesEndEl) return;
+      if (startEl.value || endEl.value || typesStartEl.value || typesEndEl.value) return;
+
+      const end = new Date();
+      const start = new Date(end);
+      start.setDate(start.getDate() - MAX_RANGE_DAYS);
+      startEl.value = formatDateInput(start);
+      endEl.value = formatDateInput(end);
+      typesStartEl.value = startEl.value;
+      typesEndEl.value = endEl.value;
+    }
+
+    function matchesType(row) {
+      const jobMatch = state.jobs === 'all' || String(row.jobs) === state.jobs;
+      const usageMatch = state.usage === 'all' || (state.usage === 'used' ? row.usage_count > 0 : row.usage_count === 0);
+      return jobMatch && usageMatch;
+    }
+
+    function renderTypes() {
+      const dropdownBody = document.getElementById('types-table-body-dropdown');
+      const dropdownMeta = document.getElementById('types-dropdown-meta');
+      const categorySelect = document.getElementById('type-category-filter');
+
+      const rows = data.typeRows.filter(matchesType);
+
+      const rowTemplate = (row) => {
+        const usagePill = row.is_unused ? '<span class="pill warn">尚未使用</span>' : `<span class="pill">${row.usage_count} 次</span>`;
+        const roleLabel = roleGroupLabel(roleGroupFromRow(row));
+        return `
+          <tr>
+            <td><strong>${row.item_code}</strong><br /><span class="muted">${roleLabel}</span></td>
+            <td>${row.category}</td>
+            <td>${row.points}</td>
+            <td>${usagePill}</td>
+          </tr>
+        `;
+      };
+
+      const categoryKeys = ['0', '1', '5', '6', '4', '3'];
+      const currentCategory = state.typeCategory;
+      if (currentCategory && !categoryKeys.includes(currentCategory)) {
+        state.typeCategory = '';
+      }
+
+      categorySelect.innerHTML = ['<option value="">請先選擇分類</option>', ...categoryKeys.map((key) => `<option value="${key}">${roleGroupLabel(key)}</option>`)].join('');
+      categorySelect.value = state.typeCategory;
+
+      if (!state.typeCategory) {
+        dropdownBody.innerHTML = '<tr><td colspan="4" class="muted">請先選擇分類，再顯示類型資訊。</td></tr>';
+        dropdownMeta.textContent = '尚未選擇分類';
+        return;
+      }
+
+      const byCategoryRows = rows.filter((row) => roleGroupFromRow(row) === state.typeCategory);
+
+      dropdownBody.innerHTML = byCategoryRows.map(rowTemplate).join('') || '<tr><td colspan="4" class="muted">目前分類下沒有資料。</td></tr>';
+      dropdownMeta.textContent = `目前分類 ${byCategoryRows.length} 筆`;
+    }
+
+    function renderJobsSummary() {
+      const container = document.getElementById('jobs-summary-list');
+      const filtered = data.typeRows.filter(matchesType);
+      const grouped = new Map();
+
+      filtered.forEach((row) => {
+        const key = roleGroupFromRow(row);
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            jobs: key,
+            label: roleGroupLabel(key),
+            total_types: 0,
+            used_types: 0,
+            unused_types: 0
+          });
+        }
+
+        const entry = grouped.get(key);
+        entry.total_types += 1;
+        if (Number(row.usage_count) > 0) {
+          entry.used_types += 1;
+        } else {
+          entry.unused_types += 1;
+        }
+      });
+
+      const rows = ['0', '1', '5', '6', '4', '3'].map((key) => grouped.get(key) || {
+        jobs: key,
+        label: roleGroupLabel(key),
+        total_types: 0,
+        used_types: 0,
+        unused_types: 0
+      });
+      container.innerHTML = rows.map((row) => {
+        const usedPercent = row.total_types > 0 ? Math.round((row.used_types / row.total_types) * 100) : 0;
+        return `
+          <div class="bar-item">
+            <div class="bar-top"><span>${row.label}</span><span>${row.used_types} / ${row.total_types}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width: ${usedPercent}%"></div></div>
+          </div>
+        `;
+      }).join('') || '<div class="muted">目前篩選條件下沒有分類概況。</div>';
+    }
+
+    function renderTopItems() {
+      const container = document.getElementById('top-items-list');
+      const maxCount = Math.max(...data.topItems.map((row) => row.count));
+      container.innerHTML = data.topItems.map((row) => {
+        const width = Math.round((row.count / maxCount) * 100);
+        return `
+          <div class="bar-item">
+            <div class="bar-top"><span>${row.group_name}</span><span>${row.count}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width: ${width}%"></div></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderEmployees() {
+      const body = document.getElementById('employees-table-body');
+      body.innerHTML = data.topEmployees.map((row) => {
+        const employeeCode = row.employee_code || row.employee_id || '未填';
+        const chips = row.position_breakdown.map((item, index) => `<span class="pill ${index > 0 ? 'gray' : ''}">${item.employee_position} ${item.count}</span>`).join(' ');
+        return `
+          <tr>
+            <td><strong>${row.employee_name}</strong><br /><span class="muted">${employeeCode}</span></td>
+            <td>${row.total_count}</td>
+            <td>${chips}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderTrend() {
+      const container = document.getElementById('trend-row');
+      const maxCount = Math.max(...data.monthlyTrend.map((row) => row.count));
+      container.innerHTML = data.monthlyTrend.map((row) => {
+        const height = Math.max(24, Math.round((row.count / maxCount) * 100));
+        return `
+          <div class="month" style="--h: ${height}%"><div class="stick"></div><span>${row.month}</span></div>
+        `;
+      }).join('');
+    }
+
+    function renderRecords() {
+      const body = document.getElementById('records-table-body');
+      let rows = data.records || [];
+      if (state.typeCategory) {
+        rows = rows.filter((row) => roleGroupFromRow(row) === state.typeCategory);
+      }
+      body.innerHTML = rows.map((row) => {
+        const date = row.event_date ? String(row.event_date).slice(0, 10) : '-';
+        const who = `${row.employee_name || '未填'} ${row.employee_code || ''}`.trim();
+        const detail = `${row.item_code || '-'}｜${row.category || '-'}｜${row.subcategory || '-'}`;
+        const notes = row.notes && String(row.notes).trim() ? row.notes : '無';
+        const points = Number(row.points || 0);
+        return `
+          <tr>
+            <td>${date}</td>
+            <td><strong>${who}</strong><br /><span class="muted">${row.employee_position || '未填'}</span></td>
+            <td>${detail}</td>
+            <td>${notes}</td>
+            <td>${points}</td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="5" class="muted">目前篩選條件下沒有明細資料。</td></tr>';
+    }
+
+    function syncStateFromControls() {
+      state.jobs = document.getElementById('jobs-filter').value;
+      state.usage = document.getElementById('usage-filter').value;
+      state.typeCategory = document.getElementById('type-category-filter').value;
+      state.position = document.getElementById('position-filter').value;
+      state.startDate = document.getElementById('date-start-types').value || document.getElementById('date-start').value;
+      state.endDate = document.getElementById('date-end-types').value || document.getElementById('date-end').value;
+      state.jobsStats = document.getElementById('jobs-stat-filter').value;
+    }
+
+    function renderAll() {
+      renderTypes();
+      renderJobsSummary();
+      renderTopItems();
+      renderEmployees();
+      renderTrend();
+      renderRecords();
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.target;
+        buttons.forEach((item) => item.classList.toggle('active', item === button));
+        panels.forEach((panel) => panel.classList.toggle('active', panel.id === target));
+      });
+    });
+
+    ['jobs-filter', 'usage-filter', 'type-category-filter', 'position-filter', 'date-start', 'date-end', 'date-start-types', 'date-end-types', 'jobs-stat-filter'].forEach((id) => {
+      document.getElementById(id).addEventListener('input', () => {
+        if (id === 'date-start-types' || id === 'date-end-types') {
+          enforceThreeMonthRange('date-start-types', 'date-end-types');
+          syncDateControls('date-start-types', 'date-end-types');
+        } else if (id === 'date-start' || id === 'date-end') {
+          enforceThreeMonthRange('date-start', 'date-end');
+          syncDateControls('date-start', 'date-end');
+        } else {
+          enforceThreeMonthRange('date-start-types', 'date-end-types');
+          syncDateControls('date-start-types', 'date-end-types');
+        }
+        syncStateFromControls();
+        renderAll();
+        loadRemoteData().finally(renderAll);
+      });
+      document.getElementById(id).addEventListener('change', () => {
+        if (id === 'date-start-types' || id === 'date-end-types') {
+          enforceThreeMonthRange('date-start-types', 'date-end-types');
+          syncDateControls('date-start-types', 'date-end-types');
+        } else if (id === 'date-start' || id === 'date-end') {
+          enforceThreeMonthRange('date-start', 'date-end');
+          syncDateControls('date-start', 'date-end');
+        } else {
+          enforceThreeMonthRange('date-start-types', 'date-end-types');
+          syncDateControls('date-start-types', 'date-end-types');
+        }
+        syncStateFromControls();
+        renderAll();
+        loadRemoteData().finally(renderAll);
+      });
+    });
+
+    initializeDateRangeDefault();
+    enforceThreeMonthRange('date-start-types', 'date-end-types');
+    syncDateControls('date-start-types', 'date-end-types');
+    document.getElementById('type-category-filter').value = state.typeCategory;
+    syncStateFromControls();
+    renderAll();
+    loadRemoteData().finally(renderAll);
+  </script>
+</body>
+
+</html>
