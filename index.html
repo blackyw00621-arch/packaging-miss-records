@@ -547,8 +547,8 @@
         <div class="field">
           <label>考核身分標準</label>
           <div class="toggle-group" id="role-toggle-group">
-            <button type="button" id="role-crew-btn" class="active" data-role="crew">一般人員 (1200分)</button>
-            <button type="button" id="role-machine-btn" data-role="machine">機台人員 (1800分)</button>
+            <button type="button" id="role-crew-btn" class="active" data-role="crew">一般組員 (1200分)</button>
+            <button type="button" id="role-machine-btn" data-role="machine">一般組員+機台考核 (1800分)</button>
           </div>
         </div>
       </div>
@@ -928,27 +928,30 @@
     }
 
     async function loadPersonalRecords() {
-      if (!state.selectedEmployee) {
-        data.personalRecords = [];
-        return;
-      }
       try {
-        const res = await fetchJson('/api/v1/records', {
-          employee_code: state.selectedEmployee.employee_code,
-          start_date: state.startDate,
-          end_date: state.endDate,
-          limit: 150
-        });
+        const params = {};
+        if (state.selectedEmployee) {
+          params.employee_code = state.selectedEmployee.employee_code;
+          params.start_date = state.startDate;
+          params.end_date = state.endDate;
+          params.limit = 150;
+        } else {
+          params.limit = 100;
+        }
+        const res = await fetchJson('/api/v1/records', params);
         data.personalRecords = res.items || [];
         apiAvailable = true;
       } catch (error) {
         apiAvailable = false;
-        // 靜態備用資料過濾
-        data.personalRecords = data.fallbackRecords.filter(r =>
-          r.employee_code === state.selectedEmployee.employee_code &&
-          (!state.startDate || r.event_date >= state.startDate) &&
-          (!state.endDate || r.event_date <= state.endDate)
-        );
+        if (state.selectedEmployee) {
+          data.personalRecords = data.fallbackRecords.filter(r => 
+            r.employee_code === state.selectedEmployee.employee_code &&
+            (!state.startDate || r.event_date >= state.startDate) &&
+            (!state.endDate || r.event_date <= state.endDate)
+          );
+        } else {
+          data.personalRecords = data.fallbackRecords;
+        }
         console.warn('無法連線後端 API 取得記點明細，已載入靜態備用記錄。', error);
       }
     }
@@ -990,13 +993,31 @@
       const fillDim2 = document.getElementById('fill-dim2');
       const fillDim3 = document.getElementById('fill-dim3');
 
-      if (!state.selectedEmployee) {
+      const isPersonal = state.selectedEmployee !== null;
+
+      // 動態更新表頭
+      const tableHeader = document.querySelector('#query-panel table thead');
+      if (tableHeader) {
+        tableHeader.innerHTML = `
+          <tr>
+            <th style="white-space: nowrap;">日期</th>
+            ${isPersonal ? '' : '<th style="white-space: nowrap;">人員</th>'}
+            <th style="white-space: nowrap;">考核維度</th>
+            <th style="white-space: nowrap;">記點細項</th>
+            <th>備註事由</th>
+            <th style="white-space: nowrap; text-align: center;">扣點</th>
+          </tr>
+        `;
+      }
+
+      if (!isPersonal) {
         // 尚未選擇組員狀態
         totalScoreVal.textContent = '1200';
         totalScoreMaxVal.textContent = ' / 1200';
-        scoreComment.textContent = '請輸入姓名或工號開始查詢';
+        scoreComment.textContent = '請輸入姓名或工號開始查詢個人品質考核';
         scoreComment.style.color = 'var(--muted)';
-
+        totalScoreVal.style.color = 'var(--muted)';
+        
         scoreDim1.textContent = '600 / 600';
         scoreDim2.textContent = '200 / 200';
         scoreDim3.textContent = '400 / 400';
@@ -1008,10 +1029,9 @@
         fillDim3.style.width = '100%';
         fillDim3.style.background = 'linear-gradient(90deg, var(--accent-2), #72a799)';
 
-        personalRecordsBody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align: center; padding: 40px 0;">請在上方輸入或選擇人員以查詢其品質分數與記點明細。</td></tr>`;
-        recordCountBadge.textContent = '0 筆記錄';
-        recordsMetaText.textContent = '尚未選擇查詢人員。';
-        return;
+        recordsMetaText.textContent = '顯示全體最新 100 筆的實際記點紀錄。';
+      } else {
+        recordsMetaText.textContent = `顯示 ${state.selectedEmployee.employee_name} (${state.selectedEmployee.employee_code}) 的記點記錄。`;
       }
 
       // 1. 初始化各維度滿分
@@ -1032,16 +1052,22 @@
         const penaltyVal = Math.abs(pts);
         const deduction = penaltyVal * DEDUCTION_MULTIPLIER;
 
-        if (dim === 1) score1 -= deduction;
-        else if (dim === 2) score2 -= deduction;
-        else if (dim === 3) score3 -= deduction;
+        if (isPersonal) {
+          if (dim === 1) score1 -= deduction;
+          else if (dim === 2) score2 -= deduction;
+          else if (dim === 3) score3 -= deduction;
+        }
 
         const dimLabel = DIMENSION_LABELS[dim] || '其他';
         const notes = rec.notes && rec.notes.trim() ? rec.notes : '無備註事由';
 
+        const who = `${rec.employee_name || '未填'} (${rec.employee_code || ''})`;
+        const whoHtml = isPersonal ? '' : `<td><strong>${who}</strong><br/><span class="muted" style="font-size:12px;">${rec.employee_position || '未填'}</span></td>`;
+
         return `
           <tr>
             <td>${date}</td>
+            ${whoHtml}
             <td><span class="pill ${dim === 3 ? 'warn' : dim === 2 ? 'gray' : ''}">${dimLabel}</span></td>
             <td><strong>${rec.item_code || '-'}</strong><br/><span class="muted" style="font-size:12px;">${rec.subcategory || '-'}</span></td>
             <td style="font-size:14px; max-width: 400px; word-break: break-all;">${notes}</td>
@@ -1050,37 +1076,43 @@
         `;
       });
 
-      // 總分計算 (防止負分在總評顯示異常，但可真實呈現數值)
-      const totalScore = score1 + score2 + score3;
-      totalScoreVal.textContent = totalScore;
-      totalScoreMaxVal.textContent = ` / ${maxTotal}`;
+      if (isPersonal) {
+        // 總分計算 (防止負分在總評顯示異常，但可真實呈現數值)
+        const totalScore = score1 + score2 + score3;
+        totalScoreVal.textContent = totalScore;
+        totalScoreMaxVal.textContent = ` / ${maxTotal}`;
 
-      // 分數評語與視覺回饋
-      if (totalScore >= maxTotal) {
-        scoreComment.textContent = '✨ 完美考核分數！品質極佳，無任何記點。';
-        scoreComment.style.color = 'var(--accent-2)';
-        totalScoreVal.style.color = 'var(--accent-2)';
-      } else if (totalScore >= maxTotal - 2) {
-        scoreComment.textContent = '👍 品質狀況優良，請繼續保持。';
-        scoreComment.style.color = 'var(--accent-2)';
-        totalScoreVal.style.color = 'var(--text)';
-      } else if (totalScore >= maxTotal - 5) {
-        scoreComment.textContent = '⚠️ 偶有作業失誤，請稍加注意作業流程。';
-        scoreComment.style.color = 'var(--accent)';
-        totalScoreVal.style.color = 'var(--accent)';
-      } else {
-        scoreComment.textContent = '❌ 作業扣分較多，請務必詳閱規章以防重複犯錯。';
-        scoreComment.style.color = 'var(--danger)';
-        totalScoreVal.style.color = 'var(--danger)';
+        // 分數評語與視覺回饋
+        if (totalScore >= maxTotal) {
+          scoreComment.textContent = '✨ 完美考核分數！品質極佳，無任何記點。';
+          scoreComment.style.color = 'var(--accent-2)';
+          totalScoreVal.style.color = 'var(--accent-2)';
+        } else if (totalScore >= maxTotal - 2) {
+          scoreComment.textContent = '👍 品質狀況優良，請繼續保持。';
+          scoreComment.style.color = 'var(--accent-2)';
+          totalScoreVal.style.color = 'var(--text)';
+        } else if (totalScore >= maxTotal - 5) {
+          scoreComment.textContent = '⚠️ 偶有作業失誤，請稍加注意作業流程。';
+          scoreComment.style.color = 'var(--accent)';
+          totalScoreVal.style.color = 'var(--accent)';
+        } else {
+          scoreComment.textContent = '❌ 作業扣分較多，請務必詳閱規章以防重複犯錯。';
+          scoreComment.style.color = 'var(--danger)';
+          totalScoreVal.style.color = 'var(--danger)';
+        }
+
+        // 填寫維度數值
+        scoreDim1.textContent = `${score1} / ${maxDim1}`;
+        scoreDim2.textContent = `${score2} / ${maxDim2}`;
+        scoreDim3.textContent = `${score3} / ${maxDim3}`;
+
+        // 進度條長度比例及漸層樣式
+        updateProgressFill(fillDim1, score1, maxDim1);
+        updateProgressFill(fillDim2, score2, maxDim2);
+        updateProgressFill(fillDim3, score3, maxDim3);
       }
 
-      // 填寫維度數值
-      scoreDim1.textContent = `${score1} / ${maxDim1}`;
-      scoreDim2.textContent = `${score2} / ${maxDim2}`;
-      scoreDim3.textContent = `${score3} / ${maxDim3}`;
-
-      // 進度條長度比例及漸層樣式
-      const updateProgressFill = (fillEl, score, max) => {
+      function updateProgressFill(fillEl, score, max) {
         const percent = Math.max(0, Math.min(100, Math.round((score / max) * 100)));
         fillEl.style.width = `${percent}%`;
         if (percent === 100) {
@@ -1090,21 +1122,16 @@
         } else {
           fillEl.style.background = 'linear-gradient(90deg, var(--danger), #e46b70)';
         }
-      };
-
-      updateProgressFill(fillDim1, score1, maxDim1);
-      updateProgressFill(fillDim2, score2, maxDim2);
-      updateProgressFill(fillDim3, score3, maxDim3);
+      }
 
       // 渲染表格
       if (listRows.length > 0) {
         personalRecordsBody.innerHTML = listRows.join('');
       } else {
-        personalRecordsBody.innerHTML = `<tr><td colspan="5" class="muted" style="text-align: center; padding: 40px 0;">在此查詢區間內，無任何記點扣分紀錄。</td></tr>`;
+        personalRecordsBody.innerHTML = `<tr><td colspan="${isPersonal ? 5 : 6}" class="muted" style="text-align: center; padding: 40px 0;">在此查詢區間內，無任何記點扣分紀錄。</td></tr>`;
       }
 
       recordCountBadge.textContent = `${listRows.length} 筆記錄`;
-      recordsMetaText.textContent = `顯示 ${state.selectedEmployee.employee_name} (${state.selectedEmployee.employee_code}) 的記點記錄。`;
     }
 
     function renderHandbook() {
@@ -1234,9 +1261,7 @@
           enforceThreeMonthRange('date-start-query', 'date-end-query');
           state.startDate = dateStartInput.value;
           state.endDate = dateEndInput.value;
-          if (state.selectedEmployee) {
-            loadPersonalRecords().then(renderQueryPanel);
-          }
+          loadPersonalRecords().then(renderQueryPanel);
         });
       });
 
@@ -1253,10 +1278,11 @@
       initializeDateRangeDefault();
       bindEvents();
 
-      // 先載入員工與規章列表
+      // 先載入員工與規章列表，並載入最新記點紀錄
       await Promise.all([
         loadEmployees(),
-        loadHandbookTypes()
+        loadHandbookTypes(),
+        loadPersonalRecords()
       ]);
 
       renderAll();
