@@ -225,10 +225,19 @@
     }
 
     .collapsible {
-      border: 1px solid rgba(47, 31, 20, 0.08);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(60, 38, 24, 0.04);
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
       overflow: hidden;
+    }
+
+    .collapsible:hover {
+      box-shadow: 0 8px 30px rgba(60, 38, 24, 0.08);
+      transform: translateY(-1px);
     }
 
     .collapsible summary {
@@ -238,23 +247,37 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      padding: 12px 14px;
-      font-size: 14px;
+      padding: 16px 20px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--text);
       border-bottom: 1px solid transparent;
+      transition: background-color 0.2s ease;
     }
 
     .collapsible summary::-webkit-details-marker {
       display: none;
     }
 
+    .collapsible summary::after {
+      content: '▼';
+      font-size: 12px;
+      color: var(--muted);
+      transition: transform 0.2s ease;
+      display: inline-block;
+    }
+
+    .collapsible[open] summary::after {
+      transform: rotate(180deg);
+    }
+
     .collapsible[open] summary {
-      border-bottom-color: rgba(47, 31, 20, 0.08);
+      border-bottom-color: var(--border);
+      background: rgba(47, 31, 20, 0.02);
     }
 
     .collapsible-content {
-      padding: 0 10px 10px;
+      padding: 12px 20px 20px;
     }
 
     .table {
@@ -531,9 +554,13 @@
 
     <section id="query-panel" class="panel active">
       <div class="toolbar">
-        <div class="field">
+        <div class="field" style="position: relative;">
           <label for="employee-search">查詢組員（姓名或工號）</label>
-          <input id="employee-search" list="employees-list" placeholder="輸入或選擇人員..." autocomplete="off" />
+          <input id="employee-search" list="employees-list" placeholder="輸入或選擇人員..." autocomplete="off"
+            style="padding-right: 28px;" />
+          <button id="clear-employee-search" type="button" aria-label="清除搜尋"
+            style="position: absolute; right: 14px; bottom: 12px; background: transparent; border: 0; font-size: 22px; color: var(--muted); cursor: pointer; display: none; padding: 0; line-height: 1; font-weight: bold; transition: color 0.15s ease;"
+            onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">&times;</button>
           <datalist id="employees-list"></datalist>
         </div>
         <div class="field">
@@ -643,103 +670,157 @@
     </section>
 
     <section id="handbook-panel" class="panel">
-      <div class="subtoolbar">
-        <div class="field">
-          <label for="handbook-jobs-filter">jobs 規章職位篩選</label>
-          <select id="handbook-jobs-filter">
-            <option value="all">全部適用規章</option>
-            <option value="0">0 全員適用</option>
-            <option value="1">1 組員適用</option>
-            <option value="2">2 貼紙適用</option>
-            <option value="3">3 品保適用</option>
-            <option value="4">4 機台適用</option>
-            <option value="5">5 線控適用</option>
-            <option value="6">6 場控適用</option>
-          </select>
-        </div>
-      </div>
+      <div class="handbook-list" style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
 
-      <div class="handbook-grid">
-        <article class="card">
-          <div class="card-header"
-            style="border-bottom: 1px solid var(--border); padding-bottom: 12px; background: rgba(47, 107, 95, 0.05);">
-            <div>
-              <h2>一、生產作業與機台操作</h2>
-              <p style="margin-top: 4px;">包括：作業準備與確認、生產加工作業、機台操作流程規範。</p>
-            </div>
-            <span class="badge" style="background: rgba(47, 107, 95, 0.1); color: var(--accent-2);">維度一</span>
-          </div>
-          <div class="card-body" style="padding: 0;">
-            <div class="type-table-scroll" style="max-height: 500px;">
+        <!-- 0 全員適用規章 -->
+        <details class="collapsible" open>
+          <summary>
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>📦 0 全員適用規章</span>
+            </span>
+            <span class="badge" id="handbook-job0-count">0 筆條款</span>
+          </summary>
+          <div class="collapsible-content">
+            <div class="type-table-scroll" style="max-height: 480px;">
               <table class="table" style="margin: 0;">
                 <thead>
                   <tr>
-                    <th style="padding-left: 14px;">代號</th>
+                    <th style="padding-left: 8px; width: 100px;">代號</th>
                     <th>規章細項</th>
-                    <th style="text-align: center; padding-right: 14px; white-space: nowrap;">扣分</th>
+                    <th style="text-align: center; padding-right: 8px; width: 80px; white-space: nowrap;">扣分</th>
                   </tr>
                 </thead>
-                <tbody id="handbook-dim1-body"></tbody>
+                <tbody id="handbook-job0-body"></tbody>
               </table>
             </div>
           </div>
-        </article>
+        </details>
 
-        <article class="card">
-          <div class="card-header"
-            style="border-bottom: 1px solid var(--border); padding-bottom: 12px; background: rgba(184, 92, 56, 0.05);">
-            <div>
-              <h2>二、現場紀律與環境維護</h2>
-              <p style="margin-top: 4px;">包括：收尾環境維護、規範遵守與團隊協作、安全紀律。</p>
-            </div>
-            <span class="badge" style="background: rgba(184, 92, 56, 0.1); color: var(--accent);">維度二</span>
-          </div>
-          <div class="card-body" style="padding: 0;">
-            <div class="type-table-scroll" style="max-height: 500px;">
+        <!-- 1 組員與貼紙規章 -->
+        <details class="collapsible">
+          <summary>
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>👥 1 組員與貼紙規章</span>
+            </span>
+            <span class="badge" id="handbook-job1-count">0 筆條款</span>
+          </summary>
+          <div class="collapsible-content">
+            <div class="type-table-scroll" style="max-height: 480px;">
               <table class="table" style="margin: 0;">
                 <thead>
                   <tr>
-                    <th style="padding-left: 14px;">代號</th>
+                    <th style="padding-left: 8px; width: 100px;">代號</th>
                     <th>規章細項</th>
-                    <th style="text-align: center; padding-right: 14px; white-space: nowrap;">扣分</th>
+                    <th style="text-align: center; padding-right: 8px; width: 80px; white-space: nowrap;">扣分</th>
                   </tr>
                 </thead>
-                <tbody id="handbook-dim2-body"></tbody>
+                <tbody id="handbook-job1-body"></tbody>
               </table>
             </div>
           </div>
-        </article>
+        </details>
 
-        <article class="card">
-          <div class="card-header"
-            style="border-bottom: 1px solid var(--border); padding-bottom: 12px; background: rgba(183, 50, 57, 0.05);">
-            <div>
-              <h2>三、品質異常與首件確認</h2>
-              <p style="margin-top: 4px;">包括：原料品質回報、成品品質、首包/首件確認。</p>
-            </div>
-            <span class="badge" style="background: rgba(183, 50, 57, 0.1); color: var(--danger);">維度三</span>
-          </div>
-          <div class="card-body" style="padding: 0;">
-            <div class="type-table-scroll" style="max-height: 500px;">
+        <!-- 3 備料與品保規章 -->
+        <details class="collapsible">
+          <summary>
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>🧪 3 備料與品保規章</span>
+            </span>
+            <span class="badge" id="handbook-job3-count">0 筆條款</span>
+          </summary>
+          <div class="collapsible-content">
+            <div class="type-table-scroll" style="max-height: 480px;">
               <table class="table" style="margin: 0;">
                 <thead>
                   <tr>
-                    <th style="padding-left: 14px;">代號</th>
+                    <th style="padding-left: 8px; width: 100px;">代號</th>
                     <th>規章細項</th>
-                    <th style="text-align: center; padding-right: 14px; white-space: nowrap;">扣分</th>
+                    <th style="text-align: center; padding-right: 8px; width: 80px; white-space: nowrap;">扣分</th>
                   </tr>
                 </thead>
-                <tbody id="handbook-dim3-body"></tbody>
+                <tbody id="handbook-job3-body"></tbody>
               </table>
             </div>
           </div>
-        </article>
+        </details>
+
+        <!-- 4 機台操作規章 -->
+        <details class="collapsible">
+          <summary>
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>⚙️ 4 機台操作規章</span>
+            </span>
+            <span class="badge" id="handbook-job4-count">0 筆條款</span>
+          </summary>
+          <div class="collapsible-content">
+            <div class="type-table-scroll" style="max-height: 480px;">
+              <table class="table" style="margin: 0;">
+                <thead>
+                  <tr>
+                    <th style="padding-left: 8px; width: 100px;">代號</th>
+                    <th>規章細項</th>
+                    <th style="text-align: center; padding-right: 8px; width: 80px; white-space: nowrap;">扣分</th>
+                  </tr>
+                </thead>
+                <tbody id="handbook-job4-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+
+        <!-- 5 線控管理規章 -->
+        <details class="collapsible">
+          <summary>
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>🟢 5 線控管理規章</span>
+            </span>
+            <span class="badge" id="handbook-job5-count">0 筆條款</span>
+          </summary>
+          <div class="collapsible-content">
+            <div class="type-table-scroll" style="max-height: 480px;">
+              <table class="table" style="margin: 0;">
+                <thead>
+                  <tr>
+                    <th style="padding-left: 8px; width: 100px;">代號</th>
+                    <th>規章細項</th>
+                    <th style="text-align: center; padding-right: 8px; width: 80px; white-space: nowrap;">扣分</th>
+                  </tr>
+                </thead>
+                <tbody id="handbook-job5-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+
+        <!-- 6 場控協調規章 -->
+        <details class="collapsible">
+          <summary>
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span>🔴 6 場控協調規章</span>
+            </span>
+            <span class="badge" id="handbook-job6-count">0 筆條款</span>
+          </summary>
+          <div class="collapsible-content">
+            <div class="type-table-scroll" style="max-height: 480px;">
+              <table class="table" style="margin: 0;">
+                <thead>
+                  <tr>
+                    <th style="padding-left: 8px; width: 100px;">代號</th>
+                    <th>規章細項</th>
+                    <th style="text-align: center; padding-right: 8px; width: 80px; white-space: nowrap;">扣分</th>
+                  </tr>
+                </thead>
+                <tbody id="handbook-job6-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
   </main>
 
   <script>
-    const API_BASE = 'http://127.0.0.1:8000';
+    const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
     const MAX_RANGE_DAYS = 92;
     const DEDUCTION_MULTIPLIER = 1; // 扣分折算乘數（預設 1 點扣 1 分）
     let apiAvailable = true;
@@ -944,7 +1025,7 @@
       } catch (error) {
         apiAvailable = false;
         if (state.selectedEmployee) {
-          data.personalRecords = data.fallbackRecords.filter(r => 
+          data.personalRecords = data.fallbackRecords.filter(r =>
             r.employee_code === state.selectedEmployee.employee_code &&
             (!state.startDate || r.event_date >= state.startDate) &&
             (!state.endDate || r.event_date <= state.endDate)
@@ -1017,7 +1098,7 @@
         scoreComment.textContent = '請輸入姓名或工號開始查詢個人品質考核';
         scoreComment.style.color = 'var(--muted)';
         totalScoreVal.style.color = 'var(--muted)';
-        
+
         scoreDim1.textContent = '600 / 600';
         scoreDim2.textContent = '200 / 200';
         scoreDim3.textContent = '400 / 400';
@@ -1135,41 +1216,74 @@
     }
 
     function renderHandbook() {
-      const dim1Body = document.getElementById('handbook-dim1-body');
-      const dim2Body = document.getElementById('handbook-dim2-body');
-      const dim3Body = document.getElementById('handbook-dim3-body');
+      // 獲取 6 個 tbody 的 DOM
+      const bodies = {
+        0: document.getElementById('handbook-job0-body'),
+        1: document.getElementById('handbook-job1-body'),
+        3: document.getElementById('handbook-job3-body'),
+        4: document.getElementById('handbook-job4-body'),
+        5: document.getElementById('handbook-job5-body'),
+        6: document.getElementById('handbook-job6-body')
+      };
 
-      const filterJob = state.handbookJob;
+      // 獲取 6 個筆數 badge 的 DOM
+      const counts = {
+        0: document.getElementById('handbook-job0-count'),
+        1: document.getElementById('handbook-job1-count'),
+        3: document.getElementById('handbook-job3-count'),
+        4: document.getElementById('handbook-job4-count'),
+        5: document.getElementById('handbook-job5-count'),
+        6: document.getElementById('handbook-job6-count')
+      };
 
-      // 過濾職位規章
-      const filteredTypes = data.allTypes.filter(t => {
-        if (filterJob === 'all') return true;
-        return String(t.jobs) === filterJob;
-      });
+      // 初始化各組的 rows 陣列
+      const groups = { 0: [], 1: [], 3: [], 4: [], 5: [], 6: [] };
 
-      const dimLists = { 1: [], 2: [], 3: [] };
+      // 將 allTypes 分群
+      data.allTypes.forEach(t => {
+        const jobVal = parseInt(t.jobs, 10);
+        let targetGroup = null;
 
-      filteredTypes.forEach(t => {
-        const dim = getDimension(t.category, t.subcategory);
-        const pts = Number(t.points || 0);
+        if (jobVal === 0) {
+          targetGroup = 0;
+        } else if (jobVal === 1 || jobVal === 2) {
+          targetGroup = 1; // 1 & 2 合併為組員與貼紙
+        } else if (jobVal === 3) {
+          targetGroup = 3;
+        } else if (jobVal === 4) {
+          targetGroup = 4;
+        } else if (jobVal === 5) {
+          targetGroup = 5;
+        } else if (jobVal === 6) {
+          targetGroup = 6;
+        }
 
-        const rowHtml = `
-          <tr>
-            <td style="padding-left: 14px; font-weight:700;">${t.item_code}</td>
-            <td><strong>${t.subcategory}</strong><br/><span class="muted" style="font-size:12px;">分類: ${t.category}</span></td>
-            <td style="text-align: center; padding-right: 14px; font-weight:800; color:var(--accent); white-space:nowrap;">${pts} 點</td>
-          </tr>
-        `;
-        if (dimLists[dim]) {
-          dimLists[dim].push(rowHtml);
+        if (targetGroup !== null) {
+          const pts = Number(t.points || 0);
+          const rowHtml = `
+            <tr>
+              <td style="padding-left: 8px; font-weight:700;">${t.item_code}</td>
+              <td><strong>${t.subcategory}</strong><br/><span class="muted" style="font-size:12px;">分類: ${t.category}</span></td>
+              <td style="text-align: center; padding-right: 8px; font-weight:800; color:var(--accent); white-space:nowrap;">${pts} 點</td>
+            </tr>
+          `;
+          groups[targetGroup].push(rowHtml);
         }
       });
 
-      const emptyTemplate = `<tr><td colspan="3" class="muted" style="text-align: center; padding: 20px 0;">此維度下無符合此職位的規章條款。</td></tr>`;
+      // 渲染各組表格與更新筆數
+      const emptyTemplate = `<tr><td colspan="3" class="muted" style="text-align: center; padding: 20px 0;">此分類下無規章條款。</td></tr>`;
 
-      dim1Body.innerHTML = dimLists[1].join('') || emptyTemplate;
-      dim2Body.innerHTML = dimLists[2].join('') || emptyTemplate;
-      dim3Body.innerHTML = dimLists[3].join('') || emptyTemplate;
+      Object.keys(bodies).forEach(groupKey => {
+        const bodyEl = bodies[groupKey];
+        const countEl = counts[groupKey];
+        if (bodyEl) {
+          bodyEl.innerHTML = groups[groupKey].join('') || emptyTemplate;
+        }
+        if (countEl) {
+          countEl.textContent = `${groups[groupKey].length} 筆條款`;
+        }
+      });
     }
 
     function renderAll() {
@@ -1194,9 +1308,24 @@
         });
       });
 
-      // 2. 人員搜尋輸入監聽
+      // 2. 人員搜尋輸入監聽與清除機制
       const empSearchInput = document.getElementById('employee-search');
+      const clearSearchBtn = document.getElementById('clear-employee-search');
+
+      function updateClearBtnVisibility() {
+        if (empSearchInput.value.trim().length > 0) {
+          clearSearchBtn.style.display = 'block';
+        } else {
+          clearSearchBtn.style.display = 'none';
+        }
+      }
+
+      // 點擊或聚焦時自動全選文字，方便直接輸入下一個人而不用手動刪除
+      empSearchInput.addEventListener('focus', () => empSearchInput.select());
+      empSearchInput.addEventListener('click', () => empSearchInput.select());
+
       empSearchInput.addEventListener('input', () => {
+        updateClearBtnVisibility();
         const val = empSearchInput.value.trim();
         // 檢查是否符合名單中的 "員工名 (工號)" 格式
         const matched = data.employees.find(emp =>
@@ -1219,16 +1348,26 @@
           loadPersonalRecords().then(renderQueryPanel);
         } else if (val === '') {
           state.selectedEmployee = null;
-          renderQueryPanel();
+          loadPersonalRecords().then(renderQueryPanel);
         }
       });
 
-      // 清除按鈕或完全無符合則不更新
+      // 監聽變更事件以處理複製貼上或清空
       empSearchInput.addEventListener('change', () => {
+        updateClearBtnVisibility();
         if (empSearchInput.value.trim() === '') {
           state.selectedEmployee = null;
-          renderQueryPanel();
+          loadPersonalRecords().then(renderQueryPanel);
         }
+      });
+
+      // 點擊一鍵清除按鈕
+      clearSearchBtn.addEventListener('click', () => {
+        empSearchInput.value = '';
+        state.selectedEmployee = null;
+        updateClearBtnVisibility();
+        loadPersonalRecords().then(renderQueryPanel);
+        empSearchInput.focus();
       });
 
       // 3. 身分標準切換按鈕
@@ -1265,12 +1404,7 @@
         });
       });
 
-      // 5. 規章手冊職位篩選
-      const hbJobsFilter = document.getElementById('handbook-jobs-filter');
-      hbJobsFilter.addEventListener('change', () => {
-        state.handbookJob = hbJobsFilter.value;
-        renderHandbook();
-      });
+      // 5. 規章手冊職位篩選已移除，改為 6 大分類折疊面板同時展示
     }
 
     // ── 初始化啟動 ───────────────────────────────

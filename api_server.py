@@ -100,6 +100,12 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/")
+def get_index():
+    from fastapi.responses import FileResponse
+    return FileResponse("index.html")
+
+
 @app.get("/api/v1/types")
 def get_types(
     jobs: str | None = Query(default=None),
@@ -443,4 +449,4 @@ def get_records(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("api_server:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=True)
