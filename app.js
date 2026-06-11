@@ -46,68 +46,6 @@ const state = {
   handbookJob: 'all'
 };
 
-// ── 品質考核三大維度映射邏輯 ──────────────────
-function getDimension(category, subcategory) {
-  const cat = String(category || '').trim();
-  const sub = String(subcategory || '').trim();
-
-  // 特殊規則：任何細項字樣包含「首件確認」或「未檢查首包」一律歸到品質維度
-  if (sub.includes('未檢查首包') || sub.includes('首件確認') || sub.includes('品質')) {
-    return 3;
-  }
-
-  // 1. 生產作業與機台操作
-  if ([
-    '作業準備與確認',
-    '生產加工作業',
-    '機台參數設定',
-    '機台袋膜設定',
-    '機台保養與維修聯絡',
-    '備料與發料作業',
-    '庫存管理與盤點',
-    '原料控管與盤點',
-    '生產執行與進度回報',
-    '生產排程規劃與追蹤'
-  ].includes(cat)) {
-    return 1;
-  }
-
-  // 2. 現場紀律與環境維護
-  if ([
-    '收尾與環境維護',
-    '效率與團隊作業',
-    '安全與稽核規範',
-    '現場人員指派與管理',
-    '現場支援與協調',
-    '行政庶務',
-    '行政庶務與費用管理',
-    'ERP作業與流程',
-    '人員後勤管理'
-  ].includes(cat)) {
-    return 2;
-  }
-
-  // 3. 品質異常與首件確認
-  if ([
-    '品質',
-    '品質異常',
-    '品質維護與異常處理',
-    '現場品質控管',
-    '履歷作業',
-    '標籤印製',
-    '系統單據與對帳'
-  ].includes(cat)) {
-    return 3;
-  }
-
-  return 1; // 預設歸入生產操作
-}
-
-const DIMENSION_LABELS = {
-  1: '生產作業與機台操作',
-  2: '現場紀律與環境維護',
-  3: '品質異常與首件確認'
-};
 
 // ── 日期輔助工具 ─────────────────────────────
 function formatDateInput(date) {
@@ -228,6 +166,59 @@ async function loadHandbookTypes() {
 }
 
 // ── UI 渲染邏輯 ──────────────────────────────────
+function renderItemSummaryChart(items, emptyMessage) {
+  const chart = document.getElementById('item-summary-chart');
+  const badge = document.getElementById('item-summary-count-badge');
+  if (!chart) return;
+
+  if (!items || items.length === 0) {
+    chart.innerHTML = `<p class="muted" style="text-align:center;padding:40px 0;">${emptyMessage}</p>`;
+    badge.textContent = '0 種細項';
+    return;
+  }
+
+  badge.textContent = `${items.length} 種細項`;
+  const maxCount = Math.max(...items.map(i => i.count));
+  const maxDed = Math.max(...items.map(i => i.totalDeduction));
+
+  chart.innerHTML = items.map(item => {
+    const catLabel = item.category || '其他';
+    const cPct = maxCount > 0 ? (item.count / maxCount * 100).toFixed(1) : 0;
+    const dPct = maxDed > 0 ? (item.totalDeduction / maxDed * 100).toFixed(1) : 0;
+    return `
+      <div class="item-bar-row">
+        <div class="item-bar-label">
+          <span class="pill gray">${catLabel}</span>
+          <strong>${item.item_code}</strong>
+          <span class="muted">${item.subcategory}</span>
+        </div>
+        <div class="item-bar-tracks">
+          <div class="item-bar-line">
+            <span class="item-bar-key">次數</span>
+            <div class="item-bar-bg">
+              <div class="item-bar-inner item-bar-inner--count" data-w="${cPct}" style="width:0%"></div>
+            </div>
+            <span class="item-bar-val">${item.count} 次</span>
+          </div>
+          <div class="item-bar-line">
+            <span class="item-bar-key">扣分</span>
+            <div class="item-bar-bg">
+              <div class="item-bar-inner item-bar-inner--ded" data-w="${dPct}" style="width:0%"></div>
+            </div>
+            <span class="item-bar-val" style="color:var(--danger);">-${item.totalDeduction}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  requestAnimationFrame(() => {
+    chart.querySelectorAll('.item-bar-inner').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  });
+}
+
 function populateEmployeesDatalist() {
   const datalist = document.getElementById('employees-list');
   if (!datalist) return;
@@ -237,27 +228,17 @@ function populateEmployeesDatalist() {
 }
 
 function renderQueryPanel() {
-  const totalScoreVal = document.getElementById('total-score-val');
-  const totalScoreMaxVal = document.getElementById('total-score-max-val');
-  const scoreComment = document.getElementById('score-comment');
+  const deductionSummaryContent = document.getElementById('deduction-summary-content');
   const personalRecordsBody = document.getElementById('personal-records-body');
   const recordCountBadge = document.getElementById('record-count-badge');
   const recordsMetaText = document.getElementById('records-meta-text');
 
-  const scoreDim1 = document.getElementById('score-dim1');
-  const scoreDim2 = document.getElementById('score-dim2');
-  const scoreDim3 = document.getElementById('score-dim3');
-
-  const fillDim1 = document.getElementById('fill-dim1');
-  const fillDim2 = document.getElementById('fill-dim2');
-  const fillDim3 = document.getElementById('fill-dim3');
-
   const isPersonal = state.selectedEmployee !== null;
 
-  // 動態更新表頭
-  const tableHeader = document.querySelector('#query-panel table thead');
-  if (tableHeader) {
-    tableHeader.innerHTML = `
+  // 動態更新記錄表格表頭（依是否為個人查詢決定是否顯示人員欄）
+  const recordsThead = document.getElementById('records-thead');
+  if (recordsThead) {
+    recordsThead.innerHTML = `
       <tr>
         <th style="white-space: nowrap;">日期</th>
         ${isPersonal ? '' : '<th style="white-space: nowrap;">人員</th>'}
@@ -270,56 +251,73 @@ function renderQueryPanel() {
   }
 
   if (!isPersonal) {
-    // 尚未選擇組員狀態
-    totalScoreVal.textContent = '1200';
-    totalScoreMaxVal.textContent = ' / 1200';
-    scoreComment.textContent = '請輸入姓名或工號開始查詢個人品質考核';
-    scoreComment.style.color = 'var(--muted)';
-    totalScoreVal.style.color = 'var(--muted)';
-
-    scoreDim1.textContent = '600 / 600';
-    scoreDim2.textContent = '200 / 200';
-    scoreDim3.textContent = '400 / 400';
-
-    fillDim1.style.width = '100%';
-    fillDim1.style.background = 'linear-gradient(90deg, var(--accent-2), #72a799)';
-    fillDim2.style.width = '100%';
-    fillDim2.style.background = 'linear-gradient(90deg, var(--accent-2), #72a799)';
-    fillDim3.style.width = '100%';
-    fillDim3.style.background = 'linear-gradient(90deg, var(--accent-2), #72a799)';
-
     recordsMetaText.textContent = '顯示全體最新 100 筆的實際記點紀錄。';
+
+    deductionSummaryContent.innerHTML = `
+      <div class="total-score-display" style="color: var(--muted); font-size: 42px;">—</div>
+      <p style="margin: 12px 0 0; font-size: 15px; font-weight: 800; color: var(--muted);">請輸入姓名或工號開始查詢</p>
+    `;
+
+    renderItemSummaryChart(null, '請選擇組員查詢記點細項統整。');
   } else {
     recordsMetaText.textContent = `顯示 ${state.selectedEmployee.employee_name} (${state.selectedEmployee.employee_code}) 的記點記錄。`;
+
+    const totalCount = data.personalRecords.length;
+    const totalDeduction = data.personalRecords.reduce((sum, r) => sum + Math.abs(Number(r.points || 0)) * DEDUCTION_MULTIPLIER, 0);
+
+    if (totalCount === 0) {
+      deductionSummaryContent.innerHTML = `
+        <div class="total-score-display" style="color: var(--accent-2);">0<span class="total-score-max"> 次</span></div>
+        <p style="margin: 12px 0 0; font-size: 15px; font-weight: 800; color: var(--accent-2);">此區間無任何記點扣分紀錄</p>
+      `;
+      renderItemSummaryChart([], '此查詢區間內無任何記點扣分紀錄。');
+    } else {
+      // 找出最常發生細項
+      const itemCountMap = {};
+      data.personalRecords.forEach(r => {
+        const key = r.item_code || r.subcategory || '未知';
+        itemCountMap[key] = (itemCountMap[key] || 0) + 1;
+      });
+      const topEntry = Object.entries(itemCountMap).sort((a, b) => b[1] - a[1])[0];
+
+      deductionSummaryContent.innerHTML = `
+        <div class="total-score-display" style="color: var(--danger);">
+          ${totalCount}<span class="total-score-max"> 次</span>
+        </div>
+        <p style="margin: 4px 0 0; font-size: 13px; color: var(--muted);">共扣 <strong style="color: var(--danger);">-${totalDeduction} 點</strong></p>
+        <p style="margin: 16px 0 0; font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: 0.05em;">最常發生細項</p>
+        <p style="margin: 4px 0 0; font-size: 14px; font-weight: 800; color: var(--accent);">${topEntry ? `${topEntry[0]}（${topEntry[1]} 次）` : '—'}</p>
+      `;
+
+      // 依記點細項彙整
+      const itemMap = {};
+      data.personalRecords.forEach(r => {
+        const key = r.item_code || r.subcategory || '未知';
+        if (!itemMap[key]) {
+          itemMap[key] = {
+            item_code: r.item_code || '—',
+            subcategory: r.subcategory || '—',
+            category: r.category || '其他',
+            count: 0,
+            totalDeduction: 0
+          };
+        }
+        itemMap[key].count += 1;
+        itemMap[key].totalDeduction += Math.abs(Number(r.points || 0)) * DEDUCTION_MULTIPLIER;
+      });
+
+      const items = Object.values(itemMap).sort((a, b) => b.totalDeduction - a.totalDeduction || b.count - a.count);
+
+      renderItemSummaryChart(items, null);
+    }
   }
 
-  // 1. 初始化各維度滿分
-  const maxDim1 = state.assessmentRole === 'machine' ? 1200 : 600;
-  const maxDim2 = 200;
-  const maxDim3 = 400;
-  const maxTotal = maxDim1 + maxDim2 + maxDim3;
-
-  let score1 = maxDim1;
-  let score2 = maxDim2;
-  let score3 = maxDim3;
-
-  // 2. 計算扣分
+  // 渲染個人記點明細表格
   const listRows = data.personalRecords.map(rec => {
     const date = rec.event_date ? String(rec.event_date).slice(0, 10) : '-';
-    const dim = getDimension(rec.category, rec.subcategory);
     const pts = Number(rec.points || 0);
-    const penaltyVal = Math.abs(pts);
-    const deduction = penaltyVal * DEDUCTION_MULTIPLIER;
-
-    if (isPersonal) {
-      if (dim === 1) score1 -= deduction;
-      else if (dim === 2) score2 -= deduction;
-      else if (dim === 3) score3 -= deduction;
-    }
-
-    const dimLabel = DIMENSION_LABELS[dim] || '其他';
+    const catLabel = rec.category || '其他';
     const notes = rec.notes && rec.notes.trim() ? rec.notes : '無備註事由';
-
     const who = `${rec.employee_name || '未填'} (${rec.employee_code || ''})`;
     const whoHtml = isPersonal ? '' : `<td><strong>${who}</strong><br/><span class="muted" style="font-size:12px;">${rec.employee_position || '未填'}</span></td>`;
 
@@ -327,7 +325,7 @@ function renderQueryPanel() {
       <tr>
         <td>${date}</td>
         ${whoHtml}
-        <td><span class="pill ${dim === 3 ? 'warn' : dim === 2 ? 'gray' : ''}">${dimLabel}</span></td>
+        <td><span class="pill gray">${catLabel}</span></td>
         <td><strong>${rec.item_code || '-'}</strong><br/><span class="muted" style="font-size:12px;">${rec.subcategory || '-'}</span></td>
         <td style="font-size:14px; max-width: 400px; word-break: break-all;">${notes}</td>
         <td style="text-align: center; font-weight:800; color:var(--danger);">${pts} 點</td>
@@ -335,55 +333,6 @@ function renderQueryPanel() {
     `;
   });
 
-  if (isPersonal) {
-    // 總分計算 (防止負分在總評顯示異常，但可真實呈現數值)
-    const totalScore = score1 + score2 + score3;
-    totalScoreVal.textContent = totalScore;
-    totalScoreMaxVal.textContent = ` / ${maxTotal}`;
-
-    // 分數評語與視覺回饋
-    if (totalScore >= maxTotal) {
-      scoreComment.textContent = '✨ 完美考核分數！品質極佳，無任何記點。';
-      scoreComment.style.color = 'var(--accent-2)';
-      totalScoreVal.style.color = 'var(--accent-2)';
-    } else if (totalScore >= maxTotal - 2) {
-      scoreComment.textContent = '👍 品質狀況優良，請繼續保持。';
-      scoreComment.style.color = 'var(--accent-2)';
-      totalScoreVal.style.color = 'var(--text)';
-    } else if (totalScore >= maxTotal - 5) {
-      scoreComment.textContent = '⚠️ 偶有作業失誤，請稍加注意作業流程。';
-      scoreComment.style.color = 'var(--accent)';
-      totalScoreVal.style.color = 'var(--accent)';
-    } else {
-      scoreComment.textContent = '❌ 作業扣分較多，請務必詳閱規章以防重複犯錯。';
-      scoreComment.style.color = 'var(--danger)';
-      totalScoreVal.style.color = 'var(--danger)';
-    }
-
-    // 填寫維度數值
-    scoreDim1.textContent = `${score1} / ${maxDim1}`;
-    scoreDim2.textContent = `${score2} / ${maxDim2}`;
-    scoreDim3.textContent = `${score3} / ${maxDim3}`;
-
-    // 進度條長度比例及漸層樣式
-    updateProgressFill(fillDim1, score1, maxDim1);
-    updateProgressFill(fillDim2, score2, maxDim2);
-    updateProgressFill(fillDim3, score3, maxDim3);
-  }
-
-  function updateProgressFill(fillEl, score, max) {
-    const percent = Math.max(0, Math.min(100, Math.round((score / max) * 100)));
-    fillEl.style.width = `${percent}%`;
-    if (percent === 100) {
-      fillEl.style.background = 'linear-gradient(90deg, var(--accent-2), #72a799)';
-    } else if (percent >= 80) {
-      fillEl.style.background = 'linear-gradient(90deg, var(--accent), #e48b4f)';
-    } else {
-      fillEl.style.background = 'linear-gradient(90deg, var(--danger), #e46b70)';
-    }
-  }
-
-  // 渲染表格
   if (listRows.length > 0) {
     personalRecordsBody.innerHTML = listRows.join('');
   } else {

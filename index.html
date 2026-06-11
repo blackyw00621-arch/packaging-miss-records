@@ -141,7 +141,7 @@
     .grid {
       display: grid;
       gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: minmax(200px, 280px) 1fr;
       align-items: start;
     }
 
@@ -492,6 +492,88 @@
       border: 1px solid rgba(184, 92, 56, 0.2);
     }
 
+    .item-bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      max-height: 340px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .item-bar-row {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .item-bar-label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .item-bar-label strong {
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .item-bar-label .muted {
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .item-bar-tracks {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .item-bar-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .item-bar-key {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      width: 24px;
+      flex-shrink: 0;
+    }
+
+    .item-bar-bg {
+      flex: 1;
+      height: 10px;
+      background: rgba(47, 31, 20, 0.08);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .item-bar-inner {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .item-bar-inner--count {
+      background: linear-gradient(90deg, var(--accent), #e48b4f);
+    }
+
+    .item-bar-inner--ded {
+      background: linear-gradient(90deg, var(--danger), #d4494f);
+    }
+
+    .item-bar-val {
+      font-size: 12px;
+      font-weight: 800;
+      min-width: 40px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
     .handbook-grid {
       display: grid;
       gap: 18px;
@@ -514,6 +596,14 @@
     @media (max-width: 720px) {
       .shell {
         padding: 14px 12px 32px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .item-bar-row {
+        grid-template-columns: 110px 1fr;
       }
 
       .app-head,
@@ -585,53 +675,25 @@
         <article class="card main-score-card">
           <div class="card-body" style="text-align: center; padding: 32px 18px;">
             <h2 style="margin: 0; font-size: 15px; color: var(--muted); font-weight: 700; letter-spacing: 0.05em;">
-              品質考核實得分數</h2>
-            <div class="total-score-display">
-              <span id="total-score-val">1200</span><span class="total-score-max" id="total-score-max-val"> /
-                1200</span>
+              記點次數統計</h2>
+            <div id="deduction-summary-content">
+              <div class="total-score-display" style="color: var(--muted); font-size: 42px;">—</div>
+              <p style="margin: 12px 0 0; font-size: 15px; font-weight: 800; color: var(--muted);">請輸入姓名或工號開始查詢</p>
             </div>
-            <p id="score-comment" style="margin: 12px 0 0; font-size: 15px; font-weight: 800; color: var(--accent-2);">
-            </p>
           </div>
         </article>
 
         <article class="card">
           <div class="card-header">
             <div>
-              <h2>三大品質維度得分</h2>
-              <p>各項考核滿分比照 Excel 基礎考核表標準。</p>
+              <h2>各記點細項統整</h2>
+              <p>依查詢結果彙整各記點細項的發生次數與扣分合計。</p>
             </div>
-            <span class="badge">品質記點扣分</span>
+            <span class="badge" id="item-summary-count-badge">0 種細項</span>
           </div>
           <div class="card-body" style="padding-top: 10px;">
-            <div class="bar-list">
-              <div class="bar-item">
-                <div class="bar-top">
-                  <span>「生產作業與機台操作」</span>
-                  <strong id="score-dim1">600 / 600</strong>
-                </div>
-                <div class="bar-track">
-                  <div id="fill-dim1" class="bar-fill" style="width: 100%"></div>
-                </div>
-              </div>
-              <div class="bar-item" style="margin-top: 6px;">
-                <div class="bar-top">
-                  <span>「現場紀律與環境維護」</span>
-                  <strong id="score-dim2">200 / 200</strong>
-                </div>
-                <div class="bar-track">
-                  <div id="fill-dim2" class="bar-fill" style="width: 100%"></div>
-                </div>
-              </div>
-              <div class="bar-item" style="margin-top: 6px;">
-                <div class="bar-top">
-                  <span>「品質異常與首件確認」</span>
-                  <strong id="score-dim3">400 / 400</strong>
-                </div>
-                <div class="bar-track">
-                  <div id="fill-dim3" class="bar-fill" style="width: 100%"></div>
-                </div>
-              </div>
+            <div id="item-summary-chart" class="item-bar-chart">
+              <p class="muted" style="text-align:center;padding:40px 0;">請選擇組員查詢記點細項統整。</p>
             </div>
           </div>
         </article>
@@ -646,8 +708,8 @@
           </div>
           <div class="card-body">
             <div class="type-table-scroll" style="max-height: 480px;">
-              <table class="table">
-                <thead>
+              <table class="table" id="records-table">
+                <thead id="records-thead">
                   <tr>
                     <th style="white-space: nowrap;">日期</th>
                     <th style="white-space: nowrap;">考核維度</th>
