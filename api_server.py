@@ -106,6 +106,12 @@ def get_index():
     return FileResponse("index.html")
 
 
+@app.get("/app.js")
+def get_app_js():
+    from fastapi.responses import FileResponse
+    return FileResponse("app.js")
+
+
 @app.get("/api/v1/types")
 def get_types(
     jobs: str | None = Query(default=None),
